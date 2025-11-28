@@ -1,24 +1,21 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import Constants from "expo-constants";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+// Environment variable se Google Web Client ID access karo
+const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+// Google Sign-In Configuration - Initialize before any sign-in request
+GoogleSignin.configure({
+  webClientId: googleWebClientId,
+});
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
   );
 }
