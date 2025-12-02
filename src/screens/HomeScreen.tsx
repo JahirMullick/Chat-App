@@ -1,4 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
     FlatList,
@@ -12,6 +14,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatItem, { ChatItemType } from "../components/ChatItem";
 import Header from "../components/Header";
+import PlusIcon from "../components/icons/Plus";
+import { MainStackParamList } from "../Navigation/types";
 
 // Stories data
 const stories = [
@@ -122,6 +126,7 @@ const chats: ChatItemType[] = [
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState("All");
+    const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
 
     const renderStory = ({ item }: { item: typeof stories[0] }) => (
         <TouchableOpacity style={styles.storyItem}>
@@ -135,7 +140,7 @@ export default function HomeScreen() {
                 </View>
                 {item.isMyStory && (
                     <View style={styles.addStoryBadge}>
-                        <Ionicons name="add" size={12} color="#fff" />
+                        <PlusIcon size={20} />
                     </View>
                 )}
             </View>
@@ -146,7 +151,14 @@ export default function HomeScreen() {
     );
 
     const renderChatItem = ({ item }: { item: ChatItemType }) => (
-        <ChatItem item={item} onPress={() => console.log("Chat pressed:", item.name)} />
+        <ChatItem
+            item={item}
+            onPress={() => navigation.navigate('Chat', {
+                chatId: item.id,
+                name: item.name,
+                avatarColor: item.avatarColor
+            })}
+        />
     );
 
     return (
@@ -247,7 +259,6 @@ const styles = StyleSheet.create({
         borderColor: "#E5E5EA",
         justifyContent: "center",
         alignItems: "center",
-        overflow: "hidden",
     },
     storyAvatarActive: {
         borderColor: "#2196F3",
@@ -261,16 +272,8 @@ const styles = StyleSheet.create({
     },
     addStoryBadge: {
         position: "absolute",
-        bottom: 0,
-        right: 0,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: "#2196F3",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 2,
-        borderColor: "#fff",
+        bottom: -2,
+        right: -2,
     },
     storyName: {
         marginTop: 4,

@@ -10,7 +10,13 @@ export type AuthStackParamList = {
 // Main Stack Types
 export type MainStackParamList = {
     Home: undefined;
-    Chat: { chatId: string; chatName: string };
+    Chat: { 
+        chatId?: string; 
+        name: string;
+        avatar?: string;
+        avatarColor?: string;
+        isOnline?: boolean;
+    };
     Profile: undefined;
     Settings: undefined;
 };

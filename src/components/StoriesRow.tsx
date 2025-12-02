@@ -1,5 +1,5 @@
 import React from "react";
-import { FlatList, Image, StyleSheet, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 
 export default function StoriesRow({ data }: any) {
     return (
@@ -11,7 +11,7 @@ export default function StoriesRow({ data }: any) {
             renderItem={({ item }) => (
                 <View style={styles.storyItem}>
                     <Image source={item.image} style={styles.avatar} />
-                    {/* <Text style={styles.label}>{item.label}</Text> */}
+                    <Text style={styles.label}>{item.label}</Text>
                 </View>
             )}
             keyExtractor={(_, i) => i.toString()}

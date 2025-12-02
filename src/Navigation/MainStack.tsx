@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
+import ChatScreen from "../screens/ChatScreen";
 import DrawerNavigator from "./DrawerNavigator";
 import { MainStackParamList } from "./types";
 
@@ -15,8 +16,7 @@ export default function MainStack() {
             }}
         >
             <Stack.Screen name="Home" component={DrawerNavigator} />
-            {/* Add more screens as needed */}
-            {/* <Stack.Screen name="Chat" component={ChatScreen} /> */}
+            <Stack.Screen name="Chat" component={ChatScreen} />
             {/* <Stack.Screen name="Profile" component={ProfileScreen} /> */}
             {/* <Stack.Screen name="Settings" component={SettingsScreen} /> */}
         </Stack.Navigator>
