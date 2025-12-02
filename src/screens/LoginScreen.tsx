@@ -1,25 +1,30 @@
+import { Ionicons } from "@expo/vector-icons";
+import auth from "@react-native-firebase/auth";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
-    View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ActivityIndicator,
-    Alert,
-    ScrollView,
+    View,
 } from "react-native";
-import { Link, router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import auth from "@react-native-firebase/auth";
-import GoogleSignInButtonComponent from "../../src/components/GoogleSigninButton";
-import AppleSignInButtonComponent from "../../src/components/AppleSigninButton";
-import FacebookSignInButtonComponent from "../../src/components/FacebookSigninButton";
+import AppleSignInButtonComponent from "../components/AppleSigninButton";
+import FacebookSignInButtonComponent from "../components/FacebookSigninButton";
+import GoogleSignInButtonComponent from "../components/GoogleSigninButton";
+import { AuthStackParamList } from "../Navigation/types";
 
-export default function Login() {
+type LoginScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, "Login">;
+
+export default function LoginScreen() {
+    const navigation = useNavigation<LoginScreenNavigationProp>();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -53,10 +58,9 @@ export default function Login() {
         try {
             // Firebase Email/Password Sign In
             await auth().signInWithEmailAndPassword(email.trim(), password);
-
             console.log('Signed in with Email/Password!');
             setIsLoading(false);
-            router.replace("/(main)/home" as any);
+            // Navigation is handled by AppNavigator based on auth state
         } catch (error: any) {
             setIsLoading(false);
 
@@ -121,7 +125,7 @@ export default function Login() {
 
             console.log('Signed in with Google!');
             setIsGoogleLoading(false);
-            router.replace("/(main)/home" as any);
+            // Navigation is handled by AppNavigator based on auth state
         } catch (error: any) {
             setIsGoogleLoading(false);
             console.error('Google Sign-In Error:', error);
@@ -135,7 +139,6 @@ export default function Login() {
             // Add your Apple Sign-In logic here
             setTimeout(() => {
                 setIsAppleLoading(false);
-                router.replace("/(main)/home" as any);
             }, 1500);
         } catch (error) {
             setIsAppleLoading(false);
@@ -149,7 +152,6 @@ export default function Login() {
             // Add your Facebook Sign-In logic here
             setTimeout(() => {
                 setIsFacebookLoading(false);
-                router.replace("/(main)/home" as any);
             }, 1500);
         } catch (error) {
             setIsFacebookLoading(false);
@@ -211,11 +213,12 @@ export default function Login() {
                         </View>
 
                         {/* Forgot Password */}
-                        <Link href={"/(auth)/forgot-password" as any} asChild>
-                            <TouchableOpacity style={styles.forgotPassword}>
-                                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                            </TouchableOpacity>
-                        </Link>
+                        <TouchableOpacity
+                            style={styles.forgotPassword}
+                            onPress={() => navigation.navigate("ForgotPassword")}
+                        >
+                            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                        </TouchableOpacity>
 
                         {/* Login Button */}
                         <TouchableOpacity
@@ -257,11 +260,9 @@ export default function Login() {
                     {/* Footer */}
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Don't have an account? </Text>
-                        <Link href={"/(auth)/signup" as any} asChild>
-                            <TouchableOpacity>
-                                <Text style={styles.signupLink}>Sign Up</Text>
-                            </TouchableOpacity>
-                        </Link>
+                        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+                            <Text style={styles.signupLink}>Sign Up</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -352,19 +353,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         color: "#999",
         fontSize: 14,
-    },
-    socialContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 16,
-    },
-    socialButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: "#f5f5f5",
-        justifyContent: "center",
-        alignItems: "center",
     },
     footer: {
         flexDirection: "row",

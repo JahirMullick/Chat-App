@@ -1,21 +1,26 @@
+import { Ionicons } from "@expo/vector-icons";
+import auth from "@react-native-firebase/auth";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
-    View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ActivityIndicator,
-    Alert,
-    ScrollView,
+    View,
 } from "react-native";
-import { Link, router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { AuthStackParamList } from "../Navigation/types";
 
-export default function Signup() {
+type SignupScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, "Signup">;
+
+export default function SignupScreen() {
+    const navigation = useNavigation<SignupScreenNavigationProp>();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -70,9 +75,7 @@ export default function Signup() {
 
             console.log('Account created successfully!');
             setIsLoading(false);
-
-            // Navigate to home after successful signup
-            router.replace("/(main)/home" as any);
+            // Navigation is handled by AppNavigator based on auth state
         } catch (error: any) {
             setIsLoading(false);
 
@@ -240,11 +243,9 @@ export default function Signup() {
                     {/* Footer */}
                     <View style={styles.footer}>
                         <Text style={styles.footerText}>Already have an account? </Text>
-                        <Link href={"/(auth)/login" as any} asChild>
-                            <TouchableOpacity>
-                                <Text style={styles.loginLink}>Sign In</Text>
-                            </TouchableOpacity>
-                        </Link>
+                        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                            <Text style={styles.loginLink}>Sign In</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>

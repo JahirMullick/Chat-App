@@ -32,7 +32,6 @@ export default {
             favicon: "./assets/images/favicon.png",
         },
         plugins: [
-            "expo-router",
             [
                 "expo-splash-screen",
                 {
@@ -59,7 +58,6 @@ export default {
             ["@react-native-google-signin/google-signin"],
         ],
         experiments: {
-            typedRoutes: true,
             reactCompiler: true,
         },
         // Extra variables jo app mein accessible honge

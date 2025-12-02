@@ -1,6 +1,5 @@
-import { StyleSheet, View } from 'react-native'
-import React from 'react'
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { StyleSheet, View } from 'react-native';
 
 interface GoogleSignInButtonProps {
     onPress: () => void;
@@ -14,7 +13,6 @@ const GoogleSignInButtonComponent = ({ onPress, disabled = false }: GoogleSignIn
                 size={GoogleSigninButton.Size.Wide}
                 onPress={onPress}
                 disabled={disabled}
-            // color prop is optional - it auto-detects light/dark mode
             />
         </View>
     )

@@ -1,19 +1,24 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
-    View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform,
-    ActivityIndicator,
-    Alert,
+    View,
 } from "react-native";
-import { Link, router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { AuthStackParamList } from "../Navigation/types";
 
-export default function ForgotPassword() {
+type ForgotPasswordScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, "ForgotPassword">;
+
+export default function ForgotPasswordScreen() {
+    const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
     const [email, setEmail] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isEmailSent, setIsEmailSent] = useState(false);
@@ -41,7 +46,7 @@ export default function ForgotPassword() {
     };
 
     const handleBackToLogin = () => {
-        router.back();
+        navigation.goBack();
     };
 
     if (isEmailSent) {
@@ -142,11 +147,9 @@ export default function ForgotPassword() {
                 {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>Remember your password? </Text>
-                    <Link href={"/(auth)/login" as any} asChild>
-                        <TouchableOpacity>
-                            <Text style={styles.loginLink}>Sign In</Text>
-                        </TouchableOpacity>
-                    </Link>
+                    <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+                        <Text style={styles.loginLink}>Sign In</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </KeyboardAvoidingView>
