@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     ScrollView,
     StatusBar,
@@ -15,7 +16,32 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatItem, { ChatItemType } from "../components/ChatItem";
 import Header from "../components/Header";
 import PlusIcon from "../components/icons/Plus";
+import { useChats, useOnlineStatus, useStories, useTabs } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
+
+// Helper function to format time
+const formatTime = (date: Date): string => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (days === 1) {
+        return 'Yesterday';
+    } else if (days < 7) {
+        return date.toLocaleDateString([], { weekday: 'short' });
+    } else {
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+};
+
+// Tab type for display
+type TabDisplay = {
+    label: string;
+    isActive?: boolean;
+    count?: number;
+};
 
 // Stories data
 const stories = [
@@ -230,16 +256,85 @@ export default function HomeScreen() {
     const [activeTab, setActiveTab] = useState("All");
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
 
+    // Firestore hooks
+    const { chats: firestoreChats, loading: chatsLoading } = useChats();
+    const { storyGroups, loading: storiesLoading } = useStories();
+    const { tabs: firestoreTabs, loading: tabsLoading } = useTabs();
+
+    // Track online status
+    useOnlineStatus();
+
+    // Convert Firestore chats to ChatItemType format
+    const chatsData = useMemo(() => {
+        if (firestoreChats.length > 0) {
+            return firestoreChats.map(({ chat, userChat }): ChatItemType => {
+                // For individual chats, get the other participant's info
+                const otherParticipantId = chat.participants.find(
+                    p => p !== userChat.chatId
+                );
+                const otherParticipant = otherParticipantId
+                    ? chat.participantDetails[otherParticipantId]
+                    : null;
+
+                return {
+                    id: chat.id,
+                    name: chat.type === "group"
+                        ? chat.name || "Unnamed Group"
+                        : otherParticipant?.displayName || "Unknown",
+                    message: chat.lastMessage || "No messages yet",
+                    time: chat.lastMessageTime
+                        ? formatTime(chat.lastMessageTime.toDate())
+                        : "",
+                    unreadCount: userChat.unreadCount > 0 ? userChat.unreadCount : undefined,
+                    isMuted: userChat.isMuted,
+                    isOnline: otherParticipant?.isOnline,
+                    isVerified: chat.isVerified,
+                    avatarColor: chat.avatarColor || "#2196F3",
+                    category: chat.category,
+                };
+            });
+        }
+        // Fallback to static data if no Firestore data
+        return chats;
+    }, [firestoreChats]);
+
+    // Convert Firestore stories to display format
+    const storiesData = useMemo(() => {
+        if (storyGroups.length > 0) {
+            return storyGroups.map((group): typeof stories[0] => ({
+                id: group.userId,
+                name: group.userName,
+                isMyStory: false, // TODO: check against current user
+                hasNewStory: group.hasUnseenStory,
+            }));
+        }
+        // Fallback to static data
+        return stories;
+    }, [storyGroups]);
+
+    // Convert Firestore tabs to display format
+    const tabsData: TabDisplay[] = useMemo(() => {
+        if (firestoreTabs.length > 0) {
+            return firestoreTabs.map((tab): TabDisplay => ({
+                label: tab.label,
+                isActive: tab.isActive,
+                count: tab.count > 0 ? tab.count : undefined,
+            }));
+        }
+        // Fallback to static data
+        return tabs;
+    }, [firestoreTabs]);
+
     // Filter chats based on active tab
     const filteredChats = useMemo(() => {
         if (activeTab === "All") {
-            return chats;
+            return chatsData;
         }
         const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
-        return chats.filter((chat) => chat.category === categoryKey);
-    }, [activeTab]);
+        return chatsData.filter((chat) => chat.category === categoryKey);
+    }, [activeTab, chatsData]);
 
-    const renderStory = ({ item }: { item: typeof stories[0] }) => (
+    const renderStory = ({ item }: { item: typeof storiesData[0] }) => (
         <TouchableOpacity style={styles.storyItem}>
             <View style={[styles.storyAvatar, item.hasNewStory && styles.storyAvatarActive]}>
                 <View style={[styles.storyImagePlaceholder, { backgroundColor: item.isMyStory ? "#E3F2FD" : "#2196F3" }]}>
@@ -287,7 +382,7 @@ export default function HomeScreen() {
             {/* Stories */}
             <FlatList
                 horizontal
-                data={stories}
+                data={storiesData}
                 renderItem={renderStory}
                 keyExtractor={(item) => item.id}
                 showsHorizontalScrollIndicator={false}
@@ -302,7 +397,7 @@ export default function HomeScreen() {
                 style={styles.tabsContainer}
                 contentContainerStyle={styles.tabsContent}
             >
-                {tabs.map((tab, index) => {
+                {tabsData.map((tab, index) => {
                     const isActive = activeTab === tab.label;
                     return (
                         <TouchableOpacity
@@ -325,18 +420,24 @@ export default function HomeScreen() {
             </ScrollView>
 
             {/* Chat List */}
-            <FlatList
-                data={filteredChats}
-                renderItem={renderChatItem}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                style={[styles.chatList, { marginBottom: insets.bottom }]}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No chats in this category</Text>
-                    </View>
-                }
-            />
+            {chatsLoading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2196F3" />
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredChats}
+                    renderItem={renderChatItem}
+                    keyExtractor={(item) => item.id}
+                    showsVerticalScrollIndicator={false}
+                    style={[styles.chatList, { marginBottom: insets.bottom }]}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>No chats in this category</Text>
+                        </View>
+                    }
+                />
+            )}
 
             {/* FAB Button */}
             <TouchableOpacity
@@ -440,6 +541,11 @@ const styles = StyleSheet.create({
     chatList: {
         flex: 1,
         backgroundColor: "#fff",
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
     fab: {
         position: "absolute",

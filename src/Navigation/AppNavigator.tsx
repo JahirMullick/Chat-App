@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { SplashScreen } from "../screens";
+import { TabService, UserService } from "../services/firestore";
 import { SessionStorage } from "../utils/storage";
 import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
@@ -16,7 +17,7 @@ export default function AppNavigator() {
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
     // Handle user state changes
-    const onAuthStateChanged = (user: FirebaseAuthTypes.User | null) => {
+    const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null) => {
         setUser(user);
 
         // Store session in MMKV when user logs in (for future use if needed)
@@ -26,6 +27,20 @@ export default function AppNavigator() {
                 displayName: user.displayName,
                 photoURL: user.photoURL,
             });
+
+            // Sync user to Firestore
+            try {
+                await UserService.createOrUpdateUser(user.uid, {
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                });
+
+                // Initialize user tabs if needed
+                await TabService.initializeUserTabs(user.uid);
+            } catch (error) {
+                console.error("Error syncing user to Firestore:", error);
+            }
         } else {
             // Clear session when user logs out
             SessionStorage.clearSession();
