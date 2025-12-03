@@ -17,6 +17,7 @@ export type MainStackParamList = {
         avatarColor?: string;
         isOnline?: boolean;
     };
+    Test: undefined;
     Profile: undefined;
     Settings: undefined;
 };

@@ -5,6 +5,7 @@ import HomeScreen from "../screens/HomeScreen";
 
 export type DrawerParamList = {
     HomeDrawer: undefined;
+    TestScreen: undefined;
 };
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
@@ -23,6 +24,7 @@ export default function DrawerNavigator() {
             }}
         >
             <Drawer.Screen name="HomeDrawer" component={HomeScreen} />
+            {/* This is a dummy screen for navigation, actual navigation to TestScreen is handled in MainStack */}
         </Drawer.Navigator>
     );
 }

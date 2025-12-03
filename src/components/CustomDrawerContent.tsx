@@ -23,6 +23,7 @@ const menuItems = [
     { icon: "bookmark-outline", label: "Saved Messages", route: "Saved" },
     { icon: "settings-outline", label: "Settings", route: "Settings" },
     { icon: "help-circle-outline", label: "Help & FAQ", route: "Help" },
+    { icon: "flask-outline", label: "Test Custom Components", route: "Test" },
 ];
 
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
@@ -86,8 +87,14 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                         key={index}
                         style={styles.menuItem}
                         onPress={() => {
-                            // props.navigation.navigate(item.route);
-                            console.log("Navigate to:", item.route);
+                            if (item.route === "Test") {
+                                // Navigate to TestScreen in MainStack
+                                props.navigation.getParent()?.navigate("Test");
+                            } else {
+                                // You can implement other navigation as needed
+                                // props.navigation.navigate(item.route);
+                                console.log("Navigate to:", item.route);
+                            }
                         }}
                         activeOpacity={0.7}
                     >

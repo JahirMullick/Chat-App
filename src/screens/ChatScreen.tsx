@@ -15,6 +15,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatInput from "../components/ChatInput";
+import {
+    MenuItemType,
+    withOptionsModal,
+} from "../components/hoc/withOptionsModal";
 
 // Message type
 interface Message {
@@ -74,7 +78,42 @@ const sampleMessages: Message[] = [
     },
 ];
 
-export default function ChatScreen() {
+// Menu items for chat options modal
+const chatMenuItems: MenuItemType[] = [
+    {
+        label: "Mute",
+        icon: "volume-high-outline",
+        showArrow: true,
+        onPress: () => alert("Mute options will appear here"),
+    },
+    {
+        label: "Video Call",
+        icon: "videocam-outline",
+        onPress: () => alert("Starting video call..."),
+    },
+    {
+        label: "Search",
+        icon: "search-outline",
+        onPress: () => alert("Opening search..."),
+    },
+    {
+        label: "Change Wallpaper",
+        icon: "image-outline",
+        onPress: () => alert("Change wallpaper options..."),
+    },
+    {
+        label: "Clear History",
+        icon: "brush-outline",
+        onPress: () => alert("Are you sure you want to clear chat history?"),
+    },
+    {
+        label: "Delete chat",
+        icon: "trash-outline",
+        onPress: () => alert("Are you sure you want to delete this chat?"),
+    },
+];
+
+function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) {
     const navigation = useNavigation();
     const route = useRoute();
     const insets = useSafeAreaInsets();
@@ -198,14 +237,14 @@ export default function ChatScreen() {
                     </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.headerAction}>
+                <TouchableOpacity style={styles.headerAction} onPress={openOptionsModal}>
                     <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
                 </TouchableOpacity>
             </View>
 
             {/* Chat Background - extends behind input */}
             <ImageBackground
-                source={require("../../assets/images/bgte.png")}
+                source={require("../../assets/images/bgte1.png")}
                 style={styles.chatBackground}
                 resizeMode="cover"
             >
@@ -232,13 +271,17 @@ export default function ChatScreen() {
                         onAttachPress={() => console.log("Attach pressed")}
                         onCameraPress={() => console.log("Camera pressed")}
                         onEmojiPress={() => console.log("Emoji pressed")}
-                        containerStyle={{ paddingBottom: insets.bottom || 8 }}
+                        containerStyle={{ paddingBottom: insets.bottom + 10 || 8 }}
                     />
                 </KeyboardAvoidingView>
             </ImageBackground>
         </View>
     );
 }
+
+const ChatScreen = withOptionsModal(ChatScreenBase, chatMenuItems, "top-right");
+
+export default ChatScreen;
 
 const styles = StyleSheet.create({
     container: {

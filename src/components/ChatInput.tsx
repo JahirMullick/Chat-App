@@ -30,7 +30,6 @@ export default function ChatInput({
     containerStyle,
 }: ChatInputProps) {
     const [internalValue, setInternalValue] = useState("");
-
     const text = value !== undefined ? value : internalValue;
     const setText = onChangeText || setInternalValue;
 

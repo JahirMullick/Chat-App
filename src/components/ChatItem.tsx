@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 
 export type ChatItemType = {
     id: string;
@@ -14,6 +14,7 @@ export type ChatItemType = {
     messageStatus?: "sent" | "delivered" | "read";
     hasMention?: boolean;
     avatarColor?: string;
+    category?: "groups" | "channels" | "bots" | "design" | "books" | "ai" | "sign";
 };
 
 interface ChatItemProps {
@@ -22,6 +23,7 @@ interface ChatItemProps {
 }
 
 export default function ChatItem({ item, onPress }: ChatItemProps) {
+
     const getStatusIcon = () => {
         if (!item.messageStatus) return null;
 

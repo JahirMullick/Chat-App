@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
     FlatList,
     ScrollView,
@@ -39,8 +39,9 @@ const tabs = [
     { label: "sign", count: 5 },
 ];
 
-// Chat data
+// Chat data with categories
 const chats: ChatItemType[] = [
+    // Personal chats (no category - shows in All only)
     {
         id: "1",
         name: "Victoria",
@@ -52,30 +53,12 @@ const chats: ChatItemType[] = [
         avatarColor: "#E91E63",
     },
     {
-        id: "2",
-        name: "Telegram Support",
-        message: "New Login Detected",
-        time: "11:38 AM",
-        unreadCount: 1,
-        isVerified: true,
-        avatarColor: "#2196F3",
-    },
-    {
         id: "3",
         name: "Eliza",
         message: "Okay",
         time: "10:24 AM",
         messageStatus: "read",
         avatarColor: "#9C27B0",
-    },
-    {
-        id: "4",
-        name: "Telegram Contests",
-        message: "Clarifications for participants of..",
-        time: "11:38 AM",
-        unreadCount: 24,
-        isVerified: true,
-        avatarColor: "#FFC107",
     },
     {
         id: "5",
@@ -92,34 +75,153 @@ const chats: ChatItemType[] = [
         time: "Wed",
         avatarColor: "#FF9800",
     },
+    // Groups
     {
         id: "7",
-        name: "Eleanor Pena",
-        message: "See you tomorrow!",
+        name: "Design Team",
+        message: "New mockups uploaded!",
         time: "Wed",
+        unreadCount: 5,
         avatarColor: "#00BCD4",
+        category: "groups",
     },
     {
         id: "8",
-        name: "Albert Flores",
-        message: "Bye",
-        time: "Thu",
-        messageStatus: "sent",
-        avatarColor: "#4CAF50",
+        name: "React Native Devs",
+        message: "Check out the new Expo update",
+        time: "Tue",
+        unreadCount: 12,
+        avatarColor: "#61DAFB",
+        category: "groups",
     },
     {
         id: "9",
-        name: "Kristin",
-        message: "Thanks ❤️",
-        time: "Wed",
-        avatarColor: "#FF9800",
+        name: "Book Club",
+        message: "Next meeting on Friday",
+        time: "Mon",
+        avatarColor: "#8D6E63",
+        category: "groups",
+    },
+    // Channels
+    {
+        id: "2",
+        name: "Telegram Support",
+        message: "New Login Detected",
+        time: "11:38 AM",
+        unreadCount: 1,
+        isVerified: true,
+        avatarColor: "#2196F3",
+        category: "channels",
+    },
+    {
+        id: "4",
+        name: "Telegram Contests",
+        message: "Clarifications for participants of..",
+        time: "11:38 AM",
+        unreadCount: 24,
+        isVerified: true,
+        avatarColor: "#FFC107",
+        category: "channels",
     },
     {
         id: "10",
-        name: "Eleanor Pena",
-        message: "See you tomorrow!",
-        time: "Wed",
-        avatarColor: "#00BCD4",
+        name: "Tech News",
+        message: "Apple announces new products",
+        time: "Today",
+        unreadCount: 8,
+        isVerified: true,
+        avatarColor: "#607D8B",
+        category: "channels",
+    },
+    // Bots
+    {
+        id: "11",
+        name: "ChatGPT Bot",
+        message: "How can I help you today?",
+        time: "Just now",
+        isVerified: true,
+        avatarColor: "#10A37F",
+        category: "bots",
+    },
+    {
+        id: "12",
+        name: "Weather Bot",
+        message: "Today: Sunny, 24°C",
+        time: "08:00 AM",
+        avatarColor: "#FFB300",
+        category: "bots",
+    },
+    // Design category
+    {
+        id: "13",
+        name: "UI/UX Inspiration",
+        message: "Check this Dribbble shot 🔥",
+        time: "Yesterday",
+        unreadCount: 3,
+        avatarColor: "#EA4C89",
+        category: "design",
+    },
+    {
+        id: "14",
+        name: "Figma Updates",
+        message: "New features released!",
+        time: "2 days ago",
+        avatarColor: "#A259FF",
+        category: "design",
+    },
+    // Books category
+    {
+        id: "15",
+        name: "Reading List",
+        message: "Added: Atomic Habits",
+        time: "Last week",
+        avatarColor: "#795548",
+        category: "books",
+    },
+    {
+        id: "16",
+        name: "Book Recommendations",
+        message: "Try 'Deep Work' by Cal Newport",
+        time: "3 days ago",
+        unreadCount: 2,
+        avatarColor: "#4E342E",
+        category: "books",
+    },
+    // AI category
+    {
+        id: "17",
+        name: "AI Research",
+        message: "GPT-5 rumors are spreading",
+        time: "Today",
+        unreadCount: 7,
+        avatarColor: "#673AB7",
+        category: "ai",
+    },
+    {
+        id: "18",
+        name: "ML Engineers",
+        message: "New PyTorch release",
+        time: "Yesterday",
+        avatarColor: "#EE4C2C",
+        category: "ai",
+    },
+    // Sign category
+    {
+        id: "19",
+        name: "Sign Language Learning",
+        message: "New lesson available! 👋",
+        time: "Today",
+        unreadCount: 1,
+        avatarColor: "#009688",
+        category: "sign",
+    },
+    {
+        id: "20",
+        name: "ASL Community",
+        message: "Weekly practice session tomorrow",
+        time: "Yesterday",
+        avatarColor: "#00897B",
+        category: "sign",
     },
 ];
 
@@ -127,6 +229,15 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState("All");
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+
+    // Filter chats based on active tab
+    const filteredChats = useMemo(() => {
+        if (activeTab === "All") {
+            return chats;
+        }
+        const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
+        return chats.filter((chat) => chat.category === categoryKey);
+    }, [activeTab]);
 
     const renderStory = ({ item }: { item: typeof stories[0] }) => (
         <TouchableOpacity style={styles.storyItem}>
@@ -215,11 +326,16 @@ export default function HomeScreen() {
 
             {/* Chat List */}
             <FlatList
-                data={chats}
+                data={filteredChats}
                 renderItem={renderChatItem}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
-                style={styles.chatList}
+                style={[styles.chatList, { marginBottom: insets.bottom }]}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>No chats in this category</Text>
+                    </View>
+                }
             />
 
             {/* FAB Button */}
@@ -339,5 +455,16 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 40,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: "#8E8E93",
+        textAlign: "center",
     },
 });

@@ -1,39 +1,150 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Button, Text, View } from "react-native";
-import { withIncomingCall } from "../components/hoc/withIncomingCall";
+import {
+    Alert,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+    MenuItemType,
+    withOptionsModal,
+} from "../components/hoc/withOptionsModal";
 
-const TestScreenBase = (props: any) => {
+// Menu items like in the screenshot
+const chatMenuItems: MenuItemType[] = [
+    {
+        label: "Mute",
+        icon: "volume-high-outline",
+        showArrow: true,
+        onPress: () => Alert.alert("Mute", "Mute options will appear here"),
+    },
+    {
+        label: "Video Call",
+        icon: "videocam-outline",
+        onPress: () => Alert.alert("Video Call", "Starting video call..."),
+    },
+    {
+        label: "Search",
+        icon: "search-outline",
+        onPress: () => Alert.alert("Search", "Opening search..."),
+    },
+    {
+        label: "Change Wallpaper",
+        icon: "image-outline",
+        onPress: () => Alert.alert("Wallpaper", "Change wallpaper options..."),
+    },
+    {
+        label: "Clear History",
+        icon: "brush-outline",
+        onPress: () => Alert.alert("Clear History", "Are you sure you want to clear chat history?"),
+    },
+    {
+        label: "Delete chat",
+        icon: "trash-outline",
+        onPress: () => Alert.alert("Delete Chat", "Are you sure you want to delete this chat?"),
+    },
+];
+
+// Base Test Screen Component
+const TestScreenBase = ({
+    openOptionsModal,
+}: {
+    openOptionsModal: () => void;
+}) => {
+    const insets = useSafeAreaInsets();
+
     return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text style={{ fontSize: 24, marginBottom: 20 }}>Test Screen</Text>
-            <Button title="Simulate Incoming Call Sheet" onPress={props.onOpenSheet} />
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            {/* Header */}
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Test Screen</Text>
+                <TouchableOpacity
+                    style={styles.menuButton}
+                    onPress={openOptionsModal}
+                >
+                    <Ionicons name="ellipsis-vertical" size={24} color="#333" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View style={styles.content}>
+                <Text style={styles.title}>Options Modal HOC Test</Text>
+                <Text style={styles.description}>
+                    Tap the three dots icon in the header to open the options modal.
+                </Text>
+
+                {/* Alternative button to open modal */}
+                <TouchableOpacity
+                    style={styles.openButton}
+                    onPress={openOptionsModal}
+                >
+                    <Text style={styles.openButtonText}>Open Options Modal</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
 
-// Example props for incoming call
-const TestScreen = withIncomingCall((props: any) => (
-    // <TestScreenBase
-    //     {...props}
-    //     callType="voice"
-    //     callName="John Doe"
-    //     callAvatar={require("../assets/avatar.png")}
-    //     callGroupAvatars={[]}
-    //     onAccept={() => alert("Call Accepted")}
-    //     onReject={() => alert("Call Rejected")}
-    // />
-    <TestScreenBase
-        {...props}
-        callType="group"
-        callName="Group Call"
-        callGroupAvatars={[
-            "https://i.pravatar.cc/101",
-            "https://i.pravatar.cc/102",
-            "https://i.pravatar.cc/103",
-        ]}
-        onAccept={() => alert("Call Accepted")}
-        onReject={() => alert("Call Rejected")}
-    />
-));
+// Wrap the component with the HOC
+const TestScreen = withOptionsModal(TestScreenBase, chatMenuItems, "top-right");
 
 export default TestScreen;
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#F2F2F7",
+    },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: "#fff",
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: "#C6C6C8",
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: "#1C1C1E",
+    },
+    menuButton: {
+        padding: 8,
+    },
+    content: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 24,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: "700",
+        color: "#1C1C1E",
+        marginBottom: 12,
+        textAlign: "center",
+    },
+    description: {
+        fontSize: 16,
+        color: "#8E8E93",
+        textAlign: "center",
+        marginBottom: 32,
+        lineHeight: 22,
+    },
+    openButton: {
+        backgroundColor: "#007AFF",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        borderRadius: 12,
+    },
+    openButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+});
