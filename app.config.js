@@ -25,6 +25,7 @@ export default {
             },
             edgeToEdgeEnabled: true,
             predictiveBackGestureEnabled: false,
+            softwareKeyboardLayoutMode: "resize",
             package: "com.anonymous.testchat",
         },
         web: {

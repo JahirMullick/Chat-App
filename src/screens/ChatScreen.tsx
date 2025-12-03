@@ -1,17 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     FlatList,
     Image,
     ImageBackground,
+    Keyboard,
     KeyboardAvoidingView,
     Platform,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatInput from "../components/ChatInput";
@@ -19,6 +20,8 @@ import {
     MenuItemType,
     withOptionsModal,
 } from "../components/hoc/withOptionsModal";
+import { useResponsive } from "../Controller/Styles/useResponsive";
+import { useBehavior } from "../Hooks/useBehavior";
 
 // Message type
 interface Message {
@@ -76,6 +79,60 @@ const sampleMessages: Message[] = [
         time: "6:07 AM",
         isMe: false,
     },
+    {
+        id: "7",
+        text: "Well, yes, of course - you very rarely keep your promises.",
+        time: "12:06 AM",
+        isMe: true,
+        isRead: true,
+    },
+    {
+        id: "8",
+        text: "And you lie very often.",
+        time: "12:06 AM",
+        isMe: true,
+        isRead: true,
+    },
+    {
+        id: "9",
+        text: "I always keep my promises",
+        time: "12:34 AM",
+        isMe: false,
+    },
+    {
+        id: "10",
+        text: "Where is my flamethrower?",
+        time: "1:50 PM",
+        isMe: true,
+        isRead: true,
+        isEdited: true,
+    },
+    {
+        id: "11",
+        text: "Tomorrow, everything tomorrow...",
+        time: "6:07 AM",
+        isMe: false,
+    },
+    {
+        id: "12",
+        text: "I always keep my promises",
+        time: "12:34 AM",
+        isMe: false,
+    },
+    {
+        id: "13",
+        text: "Where is my flamethrower?",
+        time: "1:50 PM",
+        isMe: true,
+        isRead: true,
+        isEdited: true,
+    },
+    {
+        id: "14",
+        text: "Tomorrow, everything tomorrow...",
+        time: "6:07 AM",
+        isMe: false,
+    },
 ];
 
 // Menu items for chat options modal
@@ -117,8 +174,26 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
     const navigation = useNavigation();
     const route = useRoute();
     const insets = useSafeAreaInsets();
+    const behavior = useBehavior();
+    const { hp } = useResponsive();
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState<Message[]>(sampleMessages);
+    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const showListener = Keyboard.addListener(
+            Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+            () => setIsKeyboardVisible(true)
+        );
+        const hideListener = Keyboard.addListener(
+            Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+            () => setIsKeyboardVisible(false)
+        );
+        return () => {
+            showListener.remove();
+            hideListener.remove();
+        };
+    }, []);
 
     // Get chat info from route params
     const chatName = (route.params as any)?.name || "Chat";
@@ -232,7 +307,8 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                     <View style={styles.headerInfo}>
                         <Text style={styles.headerName}>{chatName}</Text>
                         <Text style={styles.headerStatus}>
-                            {isOnline ? "online" : "last seen recently"}
+                            {isOnline ? "last seen recently" : "online"}
+                            {/* {isOnline ? "online" : "last seen recently"} */}
                         </Text>
                     </View>
                 </TouchableOpacity>
@@ -249,9 +325,12 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                 resizeMode="cover"
             >
                 <KeyboardAvoidingView
-                    style={styles.keyboardAvoidingView}
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+                    style={[
+                        styles.keyboardAvoidingView,
+                        isKeyboardVisible && { paddingBottom: insets.bottom + hp(6) }
+                    ]}
+                    behavior={behavior}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
                 >
                     <FlatList
                         data={messages}
@@ -273,9 +352,10 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                         onEmojiPress={() => console.log("Emoji pressed")}
                         containerStyle={{ paddingBottom: insets.bottom + 10 || 8 }}
                     />
+
                 </KeyboardAvoidingView>
             </ImageBackground>
-        </View>
+        </View >
     );
 }
 
