@@ -2,7 +2,7 @@ import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { SplashScreen } from "../screens";
 import { SessionStorage } from "../utils/storage";
 import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
@@ -11,6 +11,7 @@ import { RootStackParamList } from "./types";
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+    const [showSplash, setShowSplash] = useState(true);
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
@@ -38,13 +39,19 @@ export default function AppNavigator() {
         return subscriber; // unsubscribe on unmount
     }, []);
 
-    // Show loading screen while checking auth state
+    // Handle splash screen finish
+    const handleSplashFinish = () => {
+        setShowSplash(false);
+    };
+
+    // Show splash screen first
+    if (showSplash) {
+        return <SplashScreen onFinish={handleSplashFinish} duration={2500} />;
+    }
+
+    // Show nothing while initializing auth (splash already hidden means auth should be ready)
     if (initializing) {
-        return (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size="large" color="#007AFF" />
-            </View>
-        );
+        return <SplashScreen duration={0} />;
     }
 
     return (

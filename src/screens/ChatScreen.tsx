@@ -307,8 +307,7 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                     <View style={styles.headerInfo}>
                         <Text style={styles.headerName}>{chatName}</Text>
                         <Text style={styles.headerStatus}>
-                            {isOnline ? "last seen recently" : "online"}
-                            {/* {isOnline ? "online" : "last seen recently"} */}
+                            {isOnline ? "online" : "last seen recently"}
                         </Text>
                     </View>
                 </TouchableOpacity>
