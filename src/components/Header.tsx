@@ -39,7 +39,7 @@ export default function Header({
                         onPress={handleDrawerOpen}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="menu-outline" size={28} color="#000" />
+                        <Ionicons name="menu-outline" size={28} color="#fff" />
                     </TouchableOpacity>
                 )}
                 <Text style={styles.title}>{title}</Text>
@@ -51,7 +51,7 @@ export default function Header({
                     onPress={onSearchPress}
                     activeOpacity={0.7}
                 >
-                    <Ionicons name="search-outline" size={24} color="#000" />
+                    <Ionicons name="search-outline" size={24} color="#fff" />
                 </TouchableOpacity>
             )}
         </View>
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 16,
         paddingBottom: 10,
-        backgroundColor: "#fff",
+        backgroundColor: "#517DA2",
     },
     leftSection: {
         flexDirection: "row",
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: "700",
-        color: "#000",
+        color: "#fff",
         marginLeft: 8,
     },
 });

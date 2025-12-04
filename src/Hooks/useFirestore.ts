@@ -1,17 +1,17 @@
 import auth from "@react-native-firebase/auth";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Chat,
-  ChatService,
-  Message,
-  MessageService,
-  StoryGroup,
-  StoryService,
-  Tab,
-  TabService,
-  UserChat,
-  UserProfile,
-  UserService,
+    Chat,
+    ChatService,
+    Message,
+    MessageService,
+    StoryGroup,
+    StoryService,
+    Tab,
+    TabService,
+    UserChat,
+    UserProfile,
+    UserService,
 } from "../services/firestore";
 
 /**
@@ -85,7 +85,9 @@ export const useChats = () => {
     const userId = useCurrentUserId();
     const [chats, setChats] = useState<{ chat: Chat; userChat: UserChat }[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         if (!userId) {
@@ -93,21 +95,30 @@ export const useChats = () => {
             return;
         }
 
-        setLoading(true);
+        if (!refreshing) {
+            setLoading(true);
+        }
         const unsubscribe = ChatService.subscribeToUserChats(
             userId,
             (userChats) => {
                 setChats(userChats);
                 setLoading(false);
+                setRefreshing(false);
             },
             (err) => {
                 setError(err);
                 setLoading(false);
+                setRefreshing(false);
             }
         );
 
         return unsubscribe;
-    }, [userId]);
+    }, [userId, refreshKey]);
+
+    const refresh = useCallback(() => {
+        setRefreshing(true);
+        setRefreshKey(prev => prev + 1);
+    }, []);
 
     const createIndividualChat = useCallback(
         async (otherUserId: string) => {
@@ -135,7 +146,7 @@ export const useChats = () => {
         [userId]
     );
 
-    return { chats, loading, error, createIndividualChat, createGroupChat };
+    return { chats, loading, refreshing, error, refresh, createIndividualChat, createGroupChat };
 };
 
 /**
