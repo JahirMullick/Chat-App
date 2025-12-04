@@ -7,6 +7,7 @@ import {
     View,
     ViewStyle,
 } from "react-native";
+import Logo from "./icons/Logo";
 
 interface ChatInputProps {
     value?: string;
@@ -32,6 +33,8 @@ export default function ChatInput({
     const [internalValue, setInternalValue] = useState("");
     const text = value !== undefined ? value : internalValue;
     const setText = onChangeText || setInternalValue;
+
+    const hasText = text.trim().length > 0;
 
     const handleSend = () => {
         if (text.trim() && onSend) {
@@ -65,26 +68,37 @@ export default function ChatInput({
                     maxLength={4096}
                 />
 
-                {/* Attachment Button */}
-                <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={onAttachPress}
-                    activeOpacity={0.6}
-                >
-                    <Ionicons name="attach" size={26} color="#8E8E93" />
-                </TouchableOpacity>
-
-                {/* Camera/Voice Button - changes based on input */}
-                {!text.trim() && (
+                {/* Right side buttons - changes based on input */}
+                {hasText ? (
+                    /* Send Button with Logo when typing */
                     <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={onCameraPress}
-                        activeOpacity={0.6}
+                        style={styles.sendButton}
+                        onPress={handleSend}
+                        activeOpacity={0.7}
                     >
-                        <View style={styles.cameraIcon}>
-                            <Ionicons name="camera-outline" size={24} color="#8E8E93" />
-                        </View>
+                        <Logo width={32} height={32} />
                     </TouchableOpacity>
+                ) : (
+                    /* Attachment and Camera buttons when not typing */
+                    <>
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={onAttachPress}
+                            activeOpacity={0.6}
+                        >
+                            <Ionicons name="attach" size={26} color="#8E8E93" />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={onCameraPress}
+                            activeOpacity={0.6}
+                        >
+                            <View style={styles.cameraIcon}>
+                                <Ionicons name="camera-outline" size={24} color="#8E8E93" />
+                            </View>
+                        </TouchableOpacity>
+                    </>
                 )}
             </View>
         </View>
@@ -109,6 +123,13 @@ const styles = StyleSheet.create({
         height: 40,
         justifyContent: "center",
         alignItems: "center",
+    },
+    sendButton: {
+        width: 44,
+        height: 44,
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 2,
     },
     textInput: {
         flex: 1,
