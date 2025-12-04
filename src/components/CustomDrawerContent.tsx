@@ -88,11 +88,12 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                         style={styles.menuItem}
                         onPress={() => {
                             if (item.route === "Test") {
-                                // Navigate to TestScreen in MainStack
                                 props.navigation.getParent()?.navigate("Test");
+                            } else if (item.route === "Settings") {
+                                props.navigation.getParent()?.navigate("Settings");
+                            } else if (item.route === "Profile") {
+                                props.navigation.getParent()?.navigate("Settings");
                             } else {
-                                // You can implement other navigation as needed
-                                // props.navigation.navigate(item.route);
                                 console.log("Navigate to:", item.route);
                             }
                         }}
