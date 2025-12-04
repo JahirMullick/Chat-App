@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
+    RefreshControl,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -15,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatItem, { ChatItemType } from "../components/ChatItem";
 import Header from "../components/Header";
+import OptionsModal, { MenuItemType, OptionsModalRef } from "../components/hoc/withOptionsModal";
 import PlusIcon from "../components/icons/Plus";
 import { useChats, useOnlineStatus, useStories, useTabs } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
@@ -43,273 +45,103 @@ type TabDisplay = {
     count?: number;
 };
 
-// Stories data
-const stories = [
-    { id: "1", name: "My Stories", isMyStory: true, hasNewStory: false },
-    { id: "2", name: "Telegram", hasNewStory: true },
-    { id: "3", name: "Design Stuff", hasNewStory: true },
-    { id: "4", name: "Mojtaba", hasNewStory: false },
-    { id: "5", name: "Amirmahdi", hasNewStory: false },
-    { id: "6", name: "Rose", hasNewStory: true },
-];
-
-// Tab filters
-const tabs = [
+// Default tabs (used when no Firestore data)
+const defaultTabs: TabDisplay[] = [
     { label: "All", isActive: true },
-    { label: "Groups", count: 120 },
-    { label: "Channels", count: 3 },
-    { label: "Bots", count: 2 },
-    { label: "Design", count: 5 },
-    { label: "Books", count: 3 },
-    { label: "Ai", count: 2 },
-    { label: "sign", count: 5 },
 ];
 
-// Chat data with categories
-const chats: ChatItemType[] = [
-    // Personal chats (no category - shows in All only)
-    {
-        id: "1",
-        name: "Victoria",
-        message: "🎨 Yes, they are necessary",
-        time: "04:20 AM",
-        isMuted: true,
-        isOnline: true,
-        hasMention: true,
-        avatarColor: "#E91E63",
-    },
-    {
-        id: "3",
-        name: "Eliza",
-        message: "Okay",
-        time: "10:24 AM",
-        messageStatus: "read",
-        avatarColor: "#9C27B0",
-    },
-    {
-        id: "5",
-        name: "Albert Flores",
-        message: "Bye",
-        time: "Thu",
-        messageStatus: "sent",
-        avatarColor: "#4CAF50",
-    },
-    {
-        id: "6",
-        name: "Kristin",
-        message: "Thanks ❤️",
-        time: "Wed",
-        avatarColor: "#FF9800",
-    },
-    // Groups
-    {
-        id: "7",
-        name: "Design Team",
-        message: "New mockups uploaded!",
-        time: "Wed",
-        unreadCount: 5,
-        avatarColor: "#00BCD4",
-        category: "groups",
-    },
-    {
-        id: "8",
-        name: "React Native Devs",
-        message: "Check out the new Expo update",
-        time: "Tue",
-        unreadCount: 12,
-        avatarColor: "#61DAFB",
-        category: "groups",
-    },
-    {
-        id: "9",
-        name: "Book Club",
-        message: "Next meeting on Friday",
-        time: "Mon",
-        avatarColor: "#8D6E63",
-        category: "groups",
-    },
-    // Channels
-    {
-        id: "2",
-        name: "Telegram Support",
-        message: "New Login Detected",
-        time: "11:38 AM",
-        unreadCount: 1,
-        isVerified: true,
-        avatarColor: "#2196F3",
-        category: "channels",
-    },
-    {
-        id: "4",
-        name: "Telegram Contests",
-        message: "Clarifications for participants of..",
-        time: "11:38 AM",
-        unreadCount: 24,
-        isVerified: true,
-        avatarColor: "#FFC107",
-        category: "channels",
-    },
-    {
-        id: "10",
-        name: "Tech News",
-        message: "Apple announces new products",
-        time: "Today",
-        unreadCount: 8,
-        isVerified: true,
-        avatarColor: "#607D8B",
-        category: "channels",
-    },
-    // Bots
-    {
-        id: "11",
-        name: "ChatGPT Bot",
-        message: "How can I help you today?",
-        time: "Just now",
-        isVerified: true,
-        avatarColor: "#10A37F",
-        category: "bots",
-    },
-    {
-        id: "12",
-        name: "Weather Bot",
-        message: "Today: Sunny, 24°C",
-        time: "08:00 AM",
-        avatarColor: "#FFB300",
-        category: "bots",
-    },
-    // Design category
-    {
-        id: "13",
-        name: "UI/UX Inspiration",
-        message: "Check this Dribbble shot 🔥",
-        time: "Yesterday",
-        unreadCount: 3,
-        avatarColor: "#EA4C89",
-        category: "design",
-    },
-    {
-        id: "14",
-        name: "Figma Updates",
-        message: "New features released!",
-        time: "2 days ago",
-        avatarColor: "#A259FF",
-        category: "design",
-    },
-    // Books category
-    {
-        id: "15",
-        name: "Reading List",
-        message: "Added: Atomic Habits",
-        time: "Last week",
-        avatarColor: "#795548",
-        category: "books",
-    },
-    {
-        id: "16",
-        name: "Book Recommendations",
-        message: "Try 'Deep Work' by Cal Newport",
-        time: "3 days ago",
-        unreadCount: 2,
-        avatarColor: "#4E342E",
-        category: "books",
-    },
-    // AI category
-    {
-        id: "17",
-        name: "AI Research",
-        message: "GPT-5 rumors are spreading",
-        time: "Today",
-        unreadCount: 7,
-        avatarColor: "#673AB7",
-        category: "ai",
-    },
-    {
-        id: "18",
-        name: "ML Engineers",
-        message: "New PyTorch release",
-        time: "Yesterday",
-        avatarColor: "#EE4C2C",
-        category: "ai",
-    },
-    // Sign category
-    {
-        id: "19",
-        name: "Sign Language Learning",
-        message: "New lesson available! 👋",
-        time: "Today",
-        unreadCount: 1,
-        avatarColor: "#009688",
-        category: "sign",
-    },
-    {
-        id: "20",
-        name: "ASL Community",
-        message: "Weekly practice session tomorrow",
-        time: "Yesterday",
-        avatarColor: "#00897B",
-        category: "sign",
-    },
-];
-
-export default function HomeScreen() {
+function HomeScreen() {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState("All");
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+    const optionsModalRef = useRef<OptionsModalRef>(null);
+
+    // Menu items for new chat options (with navigation access)
+    const newChatMenuItems: MenuItemType[] = useMemo(() => [
+        {
+            label: "New Message",
+            subtitle: "Send a message to a contact",
+            icon: "chatbubble-outline",
+            iconColor: "#2196F3",
+            onPress: () => navigation.navigate("NewChat"),
+        },
+        {
+            label: "New Group",
+            subtitle: "Create a group with your contacts",
+            icon: "people-outline",
+            iconColor: "#4CAF50",
+            onPress: () => console.log("New Group pressed"),
+        },
+        {
+            label: "New Channel",
+            subtitle: "Create a channel to broadcast",
+            icon: "megaphone-outline",
+            iconColor: "#FF9800",
+            onPress: () => console.log("New Channel pressed"),
+        },
+        {
+            label: "Secret Chat",
+            subtitle: "End-to-end encrypted chat",
+            icon: "lock-closed-outline",
+            iconColor: "#9C27B0",
+            onPress: () => console.log("Secret Chat pressed"),
+        },
+    ], [navigation]);
 
     // Firestore hooks
-    const { chats: firestoreChats, loading: chatsLoading } = useChats();
+    const { chats: firestoreChats, loading: chatsLoading, refreshing, refresh } = useChats();
     const { storyGroups, loading: storiesLoading } = useStories();
     const { tabs: firestoreTabs, loading: tabsLoading } = useTabs();
 
     // Track online status
     useOnlineStatus();
 
-    // Convert Firestore chats to ChatItemType format
-    const chatsData = useMemo(() => {
-        if (firestoreChats.length > 0) {
-            return firestoreChats.map(({ chat, userChat }): ChatItemType => {
-                // For individual chats, get the other participant's info
-                const otherParticipantId = chat.participants.find(
-                    p => p !== userChat.chatId
-                );
-                const otherParticipant = otherParticipantId
-                    ? chat.participantDetails[otherParticipantId]
-                    : null;
+    // Story type for display
+    type StoryDisplay = {
+        id: string;
+        name: string;
+        isMyStory?: boolean;
+        hasNewStory?: boolean;
+    };
 
-                return {
-                    id: chat.id,
-                    name: chat.type === "group"
-                        ? chat.name || "Unnamed Group"
-                        : otherParticipant?.displayName || "Unknown",
-                    message: chat.lastMessage || "No messages yet",
-                    time: chat.lastMessageTime
-                        ? formatTime(chat.lastMessageTime.toDate())
-                        : "",
-                    unreadCount: userChat.unreadCount > 0 ? userChat.unreadCount : undefined,
-                    isMuted: userChat.isMuted,
-                    isOnline: otherParticipant?.isOnline,
-                    isVerified: chat.isVerified,
-                    avatarColor: chat.avatarColor || "#2196F3",
-                    category: chat.category,
-                };
-            });
-        }
-        // Fallback to static data if no Firestore data
-        return chats;
+    // Convert Firestore chats to ChatItemType format
+    const chatsData: ChatItemType[] = useMemo(() => {
+        return firestoreChats.map(({ chat, userChat }): ChatItemType => {
+            // For individual chats, get the other participant's info
+            const otherParticipantId = chat.participants.find(
+                p => p !== userChat.chatId
+            );
+            const otherParticipant = otherParticipantId
+                ? chat.participantDetails[otherParticipantId]
+                : null;
+
+            return {
+                id: chat.id,
+                name: chat.type === "group"
+                    ? chat.name || "Unnamed Group"
+                    : otherParticipant?.displayName || "Unknown",
+                message: chat.lastMessage || "No messages yet",
+                time: chat.lastMessageTime
+                    ? formatTime(chat.lastMessageTime.toDate())
+                    : "",
+                unreadCount: userChat.unreadCount > 0 ? userChat.unreadCount : undefined,
+                isMuted: userChat.isMuted,
+                isOnline: otherParticipant?.isOnline,
+                isVerified: chat.isVerified,
+                avatarColor: chat.avatarColor || "#2196F3",
+                category: chat.category,
+            };
+        });
     }, [firestoreChats]);
 
     // Convert Firestore stories to display format
-    const storiesData = useMemo(() => {
-        if (storyGroups.length > 0) {
-            return storyGroups.map((group): typeof stories[0] => ({
-                id: group.userId,
-                name: group.userName,
-                isMyStory: false, // TODO: check against current user
-                hasNewStory: group.hasUnseenStory,
-            }));
-        }
-        // Fallback to static data
-        return stories;
+    const storiesData: StoryDisplay[] = useMemo(() => {
+        return storyGroups.map((group): StoryDisplay => ({
+            id: group.userId,
+            name: group.userName,
+            isMyStory: false, // TODO: check against current user
+            hasNewStory: group.hasUnseenStory,
+        }));
     }, [storyGroups]);
 
     // Convert Firestore tabs to display format
@@ -321,8 +153,8 @@ export default function HomeScreen() {
                 count: tab.count > 0 ? tab.count : undefined,
             }));
         }
-        // Fallback to static data
-        return tabs;
+        // Default tabs if no Firestore data
+        return defaultTabs;
     }, [firestoreTabs]);
 
     // Filter chats based on active tab
@@ -331,10 +163,10 @@ export default function HomeScreen() {
             return chatsData;
         }
         const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
-        return chatsData.filter((chat) => chat.category === categoryKey);
+        return chatsData.filter((chat: ChatItemType) => chat.category === categoryKey);
     }, [activeTab, chatsData]);
 
-    const renderStory = ({ item }: { item: typeof storiesData[0] }) => (
+    const renderStory = ({ item }: { item: StoryDisplay }) => (
         <TouchableOpacity style={styles.storyItem}>
             <View style={[styles.storyAvatar, item.hasNewStory && styles.storyAvatarActive]}>
                 <View style={[styles.storyImagePlaceholder, { backgroundColor: item.isMyStory ? "#E3F2FD" : "#2196F3" }]}>
@@ -369,7 +201,7 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            <StatusBar barStyle="light-content" backgroundColor="#517DA2" />
 
             {/* Header with Drawer */}
             <Header
@@ -380,7 +212,7 @@ export default function HomeScreen() {
             />
 
             {/* Stories */}
-            <FlatList
+            {/* <FlatList
                 horizontal
                 data={storiesData}
                 renderItem={renderStory}
@@ -388,7 +220,7 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.storiesContent}
                 style={styles.storiesContainer}
-            />
+            /> */}
 
             {/* Tab Filters */}
             <ScrollView
@@ -431,6 +263,14 @@ export default function HomeScreen() {
                     keyExtractor={(item) => item.id}
                     showsVerticalScrollIndicator={false}
                     style={[styles.chatList, { marginBottom: insets.bottom }]}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={refresh}
+                            colors={["#517DA2"]}
+                            tintColor="#517DA2"
+                        />
+                    }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Text style={styles.emptyText}>No chats in this category</Text>
@@ -443,12 +283,22 @@ export default function HomeScreen() {
             <TouchableOpacity
                 style={[styles.fab, { bottom: 20 + insets.bottom }]}
                 activeOpacity={0.8}
+                onPress={() => optionsModalRef.current?.open()}
             >
                 <Ionicons name="add" size={28} color="#fff" />
             </TouchableOpacity>
+
+            {/* Options Modal */}
+            <OptionsModal
+                ref={optionsModalRef}
+                items={newChatMenuItems}
+                position="bottom-right"
+            />
         </View>
     );
 }
+
+export default HomeScreen;
 
 const styles = StyleSheet.create({
     container: {
