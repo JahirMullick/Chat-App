@@ -3,7 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { SplashScreen } from "../screens";
-import { TabService, UserService } from "../services/firestore";
+import { TabService, testFirestoreConnection, UserService } from "../services/firestore";
 import { SessionStorage } from "../utils/storage";
 import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
@@ -15,6 +15,14 @@ export default function AppNavigator() {
     const [showSplash, setShowSplash] = useState(true);
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+
+    // Test Firestore connection on app start
+    useEffect(() => {
+        (async () => {
+            const connected = await testFirestoreConnection();
+            console.log("Firestore connection result:", connected);
+        })();
+    }, []);
 
     // Handle user state changes
     const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null) => {
