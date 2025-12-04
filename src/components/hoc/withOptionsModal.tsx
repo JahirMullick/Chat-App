@@ -16,6 +16,8 @@ export type MenuItemType = {
     label: string;
     icon: keyof typeof Ionicons.glyphMap;
     showArrow?: boolean;
+    subtitle?: string;
+    iconColor?: string;
     onPress?: () => void;
 };
 
@@ -26,7 +28,7 @@ export type OptionsModalRef = {
 
 type OptionsModalProps = {
     items: MenuItemType[];
-    position?: "top-right" | "top-left" | "center";
+    position?: "top-right" | "top-left" | "center" | "bottom-right";
 };
 
 const OptionsModal = forwardRef<OptionsModalRef, OptionsModalProps>(
@@ -49,6 +51,8 @@ const OptionsModal = forwardRef<OptionsModalRef, OptionsModalProps>(
                     return { justifyContent: "flex-start", alignItems: "flex-start" };
                 case "center":
                     return { justifyContent: "center", alignItems: "center" };
+                case "bottom-right":
+                    return { justifyContent: "flex-end", alignItems: "flex-end" };
                 case "top-right":
                 default:
                     return { justifyContent: "flex-start", alignItems: "flex-end" };
@@ -77,14 +81,28 @@ const OptionsModal = forwardRef<OptionsModalRef, OptionsModalProps>(
                                 activeOpacity={0.7}
                                 onPress={() => handlePress(item)}
                             >
-                                <View style={styles.iconContainer}>
+                                <View style={[
+                                    styles.iconContainer,
+                                    item.iconColor && {
+                                        backgroundColor: item.iconColor,
+                                        borderRadius: 20,
+                                        width: 40,
+                                        height: 40,
+                                        justifyContent: "center",
+                                    }
+                                ]}>
                                     <Ionicons
                                         name={item.icon}
-                                        size={24}
-                                        color="#555"
+                                        size={item.iconColor ? 20 : 24}
+                                        color={item.iconColor ? "#fff" : "#555"}
                                     />
                                 </View>
-                                <Text style={styles.label}>{item.label}</Text>
+                                <View style={styles.labelContainer}>
+                                    <Text style={styles.label}>{item.label}</Text>
+                                    {item.subtitle && (
+                                        <Text style={styles.subtitle}>{item.subtitle}</Text>
+                                    )}
+                                </View>
                                 {item.showArrow && (
                                     <Ionicons
                                         name="chevron-forward"
@@ -108,12 +126,14 @@ OptionsModal.displayName = "OptionsModal";
  * 
  * Usage:
  * const MyComponentWithMenu = withOptionsModal(MyComponent, menuItems);
+ * // OR with a function that returns items (for dynamic items with navigation, etc.)
+ * const MyComponentWithMenu = withOptionsModal(MyComponent, (props) => menuItems);
  * 
  * In MyComponent, you can call props.openOptionsModal() to open the modal.
  */
 export const withOptionsModal = <P extends object>(
     WrappedComponent: React.ComponentType<P & { openOptionsModal: () => void }>,
-    items: MenuItemType[],
+    itemsOrGetter: MenuItemType[] | ((props: P) => MenuItemType[]),
     position?: OptionsModalProps["position"]
 ) => {
     const WithOptionsModal = (props: Omit<P, "openOptionsModal">) => {
@@ -122,6 +142,11 @@ export const withOptionsModal = <P extends object>(
         const openOptionsModal = () => {
             modalRef.current?.open();
         };
+
+        // Get items - either directly or by calling the getter function
+        const items = typeof itemsOrGetter === "function"
+            ? itemsOrGetter(props as P)
+            : itemsOrGetter;
 
         return (
             <>
@@ -146,6 +171,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.3)",
         paddingTop: 50,
+        paddingBottom: 100,
         paddingHorizontal: 12,
     },
     menuContainer: {
@@ -158,6 +184,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowRadius: 12,
         elevation: 8,
+        marginBottom: 16,
+        marginRight: 20,
     },
     row: {
         flexDirection: "row",
@@ -174,10 +202,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginRight: 14,
     },
-    label: {
+    labelContainer: {
         flex: 1,
+    },
+    label: {
         fontSize: 17,
         color: "#1C1C1E",
         fontWeight: "400",
+    },
+    subtitle: {
+        fontSize: 13,
+        color: "#8E8E93",
+        marginTop: 2,
     },
 });
