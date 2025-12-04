@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     ImageBackground,
@@ -22,9 +23,10 @@ import {
 } from "../components/hoc/withOptionsModal";
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
+import { useCurrentUserId, useMessages } from "../Hooks/useFirestore";
 
-// Message type
-interface Message {
+// Message type for display
+interface DisplayMessage {
     id: string;
     text: string;
     time: string;
@@ -37,103 +39,12 @@ interface Message {
     videoParticipants?: string[];
 }
 
-// Sample messages data
-const sampleMessages: Message[] = [
-    {
-        id: "1",
-        text: "Just ask - I will do everything for you.",
-        time: "10:03 AM",
-        isMe: false,
-    },
-    {
-        id: "2",
-        text: "Well, yes, of course - you very rarely keep your promises.",
-        time: "12:06 AM",
-        isMe: true,
-        isRead: true,
-    },
-    {
-        id: "3",
-        text: "And you lie very often.",
-        time: "12:06 AM",
-        isMe: true,
-        isRead: true,
-    },
-    {
-        id: "4",
-        text: "I always keep my promises",
-        time: "12:34 AM",
-        isMe: false,
-    },
-    {
-        id: "5",
-        text: "Where is my flamethrower?",
-        time: "1:50 PM",
-        isMe: true,
-        isRead: true,
-        isEdited: true,
-    },
-    {
-        id: "6",
-        text: "Tomorrow, everything tomorrow...",
-        time: "6:07 AM",
-        isMe: false,
-    },
-    {
-        id: "7",
-        text: "Well, yes, of course - you very rarely keep your promises.",
-        time: "12:06 AM",
-        isMe: true,
-        isRead: true,
-    },
-    {
-        id: "8",
-        text: "And you lie very often.",
-        time: "12:06 AM",
-        isMe: true,
-        isRead: true,
-    },
-    {
-        id: "9",
-        text: "I always keep my promises",
-        time: "12:34 AM",
-        isMe: false,
-    },
-    {
-        id: "10",
-        text: "Where is my flamethrower?",
-        time: "1:50 PM",
-        isMe: true,
-        isRead: true,
-        isEdited: true,
-    },
-    {
-        id: "11",
-        text: "Tomorrow, everything tomorrow...",
-        time: "6:07 AM",
-        isMe: false,
-    },
-    {
-        id: "12",
-        text: "I always keep my promises",
-        time: "12:34 AM",
-        isMe: false,
-    },
-    {
-        id: "13",
-        text: "Where is my flamethrower?",
-        time: "1:50 PM",
-        isMe: true,
-        isRead: true,
-        isEdited: true,
-    },
-    {
-        id: "14",
-        text: "Tomorrow, everything tomorrow...",
-        time: "6:07 AM",
-        isMe: false,
-    },
-];
+// Helper function to format time
+const formatMessageTime = (timestamp: any): string => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
 
 // Menu items for chat options modal
 const chatMenuItems: MenuItemType[] = [
@@ -177,8 +88,41 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
     const behavior = useBehavior();
     const { hp } = useResponsive();
     const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState<Message[]>(sampleMessages);
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+    // Get current user ID
+    const currentUserId = useCurrentUserId();
+
+    // Get chat info from route params
+    const chatId = (route.params as any)?.chatId;
+    const chatName = (route.params as any)?.name || "Chat";
+    const chatAvatar = (route.params as any)?.avatar;
+    const avatarColor = (route.params as any)?.avatarColor || "#4CAF50";
+    const isOnline = (route.params as any)?.isOnline ?? true;
+
+    // Use Firestore messages if chatId exists
+    const {
+        messages: firestoreMessages,
+        loading: messagesLoading,
+        sendMessage: sendFirestoreMessage
+    } = useMessages(chatId || null);
+
+    // Convert Firestore messages to display format
+    const displayMessages: DisplayMessage[] = useMemo(() => {
+        if (!chatId) {
+            return []; // No chat selected
+        }
+        return firestoreMessages.map((msg): DisplayMessage => ({
+            id: msg.id,
+            text: msg.text,
+            time: formatMessageTime(msg.timestamp),
+            isMe: msg.senderId === currentUserId,
+            isRead: msg.readBy?.includes(currentUserId || "") || msg.status === "read",
+            isEdited: msg.isEdited,
+            imageUri: msg.mediaType === "image" ? msg.mediaUrl : undefined,
+            videoThumbnail: msg.mediaType === "video" ? msg.mediaThumbnail : undefined,
+        })).reverse(); // Reverse to show oldest first
+    }, [firestoreMessages, chatId, currentUserId]);
 
     useEffect(() => {
         const showListener = Keyboard.addListener(
@@ -195,13 +139,7 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
         };
     }, []);
 
-    // Get chat info from route params
-    const chatName = (route.params as any)?.name || "Chat";
-    const chatAvatar = (route.params as any)?.avatar;
-    const avatarColor = (route.params as any)?.avatarColor || "#4CAF50";
-    const isOnline = true; // You can pass this from params
-
-    const renderMessage = ({ item }: { item: Message }) => {
+    const renderMessage = ({ item }: { item: DisplayMessage }) => {
         const isMe = item.isMe;
 
         return (
@@ -264,17 +202,13 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
         </View>
     );
 
-    const sendMessage = (text?: string) => {
+    const handleSendMessage = async (text?: string) => {
         const messageText = text || message;
         if (messageText.trim()) {
-            const newMessage: Message = {
-                id: Date.now().toString(),
-                text: messageText.trim(),
-                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                isMe: true,
-                isRead: false,
-            };
-            setMessages([...messages, newMessage]);
+            if (chatId) {
+                // Send to Firestore
+                await sendFirestoreMessage(messageText.trim());
+            }
             setMessage("");
         }
     };
@@ -331,21 +265,27 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                     behavior={behavior}
                     keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
                 >
-                    <FlatList
-                        data={messages}
-                        renderItem={renderMessage}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.messagesList}
-                        ListHeaderComponent={renderDateHeader}
-                        showsVerticalScrollIndicator={false}
-                        style={styles.messagesFlatList}
-                    />
+                    {messagesLoading && chatId ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#517DA2" />
+                        </View>
+                    ) : (
+                        <FlatList
+                            data={displayMessages}
+                            renderItem={renderMessage}
+                            keyExtractor={(item) => item.id}
+                            contentContainerStyle={styles.messagesList}
+                            ListHeaderComponent={renderDateHeader}
+                            showsVerticalScrollIndicator={false}
+                            style={styles.messagesFlatList}
+                        />
+                    )}
 
                     {/* Input Bar */}
                     <ChatInput
                         value={message}
                         onChangeText={setMessage}
-                        onSend={sendMessage}
+                        onSend={handleSendMessage}
                         onAttachPress={() => console.log("Attach pressed")}
                         onCameraPress={() => console.log("Camera pressed")}
                         onEmojiPress={() => console.log("Emoji pressed")}
@@ -529,5 +469,10 @@ const styles = StyleSheet.create({
     videoDuration: {
         color: "rgba(255,255,255,0.8)",
         fontSize: 12,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
     },
 });
