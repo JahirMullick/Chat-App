@@ -193,6 +193,37 @@ export const UserService = {
     },
 
     /**
+     * Search users by email (exact match or prefix)
+     */
+    searchUsersByEmail: async (email: string, currentUserId?: string, limit: number = 20): Promise<UserProfile[]> => {
+        try {
+            const normalizedEmail = email.toLowerCase().trim();
+            
+            // Search for users whose email starts with the search term
+            const snapshot = await UserService.getCollection()
+                .where("email", ">=", normalizedEmail)
+                .where("email", "<=", normalizedEmail + "\uf8ff")
+                .limit(limit)
+                .get();
+
+            const users = snapshot.docs.map(doc => ({
+                uid: doc.id,
+                ...doc.data(),
+            } as UserProfile));
+
+            // Filter out current user if provided
+            if (currentUserId) {
+                return users.filter(user => user.uid !== currentUserId);
+            }
+
+            return users;
+        } catch (error) {
+            console.error("Error searching users by email:", error);
+            throw error;
+        }
+    },
+
+    /**
      * Delete user profile
      */
     deleteUser: async (userId: string): Promise<void> => {
