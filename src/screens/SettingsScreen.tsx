@@ -69,7 +69,7 @@ export default function SettingsScreen() {
             items: [
                 {
                     icon: "call-outline",
-                    label: userProfile?.phoneNumber || "+91 XXXXXXXXXX",
+                    label: userProfile?.phoneNumber || "~Not Added",
                     value: "Tap to change phone number",
                     onPress: () => console.log("Change phone"),
                 },
@@ -135,12 +135,12 @@ export default function SettingsScreen() {
         },
         {
             items: [
-                {
-                    icon: "star-outline",
-                    label: "Premium",
-                    iconColor: "#9C7CF4",
-                    onPress: () => console.log("Premium"),
-                },
+                // {
+                //     icon: "star-outline",
+                //     label: "Premium",
+                //     iconColor: "#9C7CF4",
+                //     onPress: () => console.log("Premium"),
+                // },
                 {
                     icon: "star",
                     label: "My Stars",
@@ -199,7 +199,7 @@ export default function SettingsScreen() {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={[styles.container]}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
@@ -212,9 +212,9 @@ export default function SettingsScreen() {
                     <TouchableOpacity style={styles.headerIcon}>
                         <Ionicons name="qr-code-outline" size={22} color="#fff" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.headerIcon}>
+                    {/* <TouchableOpacity style={styles.headerIcon}>
                         <Ionicons name="search" size={22} color="#fff" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <TouchableOpacity style={styles.headerIcon}>
                         <Ionicons name="ellipsis-vertical" size={22} color="#fff" />
                     </TouchableOpacity>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         backgroundColor: "#2196F3",
         paddingHorizontal: 8,
-        paddingVertical: 8,
+        paddingTop: 40,
     },
     backButton: {
         width: 40,
