@@ -18,7 +18,7 @@ import ChatItem, { ChatItemType } from "../components/ChatItem";
 import Header from "../components/Header";
 import OptionsModal, { MenuItemType, OptionsModalRef } from "../components/hoc/withOptionsModal";
 import PlusIcon from "../components/icons/Plus";
-import { useChats, useOnlineStatus, useStories, useTabs } from "../Hooks/useFirestore";
+import { useChats, useCurrentUserId, useOnlineStatus, useStories, useTabs } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
 
 // Helper function to format time
@@ -94,6 +94,7 @@ function HomeScreen() {
     ], [navigation]);
 
     // Firestore hooks
+    const currentUserId = useCurrentUserId();
     const { chats: firestoreChats, loading: chatsLoading, refreshing, refresh } = useChats();
     const { storyGroups, loading: storiesLoading } = useStories();
     const { tabs: firestoreTabs, loading: tabsLoading } = useTabs();
@@ -112,9 +113,9 @@ function HomeScreen() {
     // Convert Firestore chats to ChatItemType format
     const chatsData: ChatItemType[] = useMemo(() => {
         return firestoreChats.map(({ chat, userChat }): ChatItemType => {
-            // For individual chats, get the other participant's info
+            // For individual chats, get the other participant's info (not the current user)
             const otherParticipantId = chat.participants.find(
-                p => p !== userChat.chatId
+                p => p !== currentUserId
             );
             const otherParticipant = otherParticipantId
                 ? chat.participantDetails[otherParticipantId]
@@ -137,7 +138,7 @@ function HomeScreen() {
                 category: chat.category,
             };
         });
-    }, [firestoreChats]);
+    }, [firestoreChats, currentUserId]);
 
     // Convert Firestore stories to display format
     const storiesData: StoryDisplay[] = useMemo(() => {

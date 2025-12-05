@@ -24,6 +24,7 @@ import {
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
 import { useCurrentUserId, useMessages } from "../Hooks/useFirestore";
+import { ChatService } from "../services/firestore";
 
 // Message type for display
 interface DisplayMessage {
@@ -120,28 +121,33 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
     const { hp } = useResponsive();
     const [message, setMessage] = useState("");
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+    const [isSending, setIsSending] = useState(false);
 
     // Get current user ID
     const currentUserId = useCurrentUserId();
 
     // Get chat info from route params
-    const chatId = (route.params as any)?.chatId;
+    const initialChatId = (route.params as any)?.chatId;
+    const recipientId = (route.params as any)?.recipientId; // For new chats
     const chatName = (route.params as any)?.name || "Chat";
     const chatAvatar = (route.params as any)?.avatar;
     const avatarColor = (route.params as any)?.avatarColor || "#4CAF50";
     const isOnline = (route.params as any)?.isOnline ?? true;
+
+    // Track current chatId (may be null initially for new chats)
+    const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId || null);
 
     // Use Firestore messages if chatId exists
     const {
         messages: firestoreMessages,
         loading: messagesLoading,
         sendMessage: sendFirestoreMessage
-    } = useMessages(chatId || null);
+    } = useMessages(activeChatId);
 
     // Convert Firestore messages to display format
     const displayMessages: DisplayMessage[] = useMemo(() => {
-        if (!chatId) {
-            return []; // No chat selected
+        if (!activeChatId) {
+            return []; // No chat yet
         }
         const messages = firestoreMessages.map((msg): DisplayMessage => {
             // Check if message is read by someone other than the sender
@@ -172,7 +178,7 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                 dateLabel: showDateSeparator ? formatDateHeader(msg.timestamp) : undefined,
             };
         });
-    }, [firestoreMessages, chatId, currentUserId]);
+    }, [firestoreMessages, activeChatId, currentUserId]);
 
     useEffect(() => {
         const showListener = Keyboard.addListener(
@@ -255,12 +261,33 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
 
     const handleSendMessage = async (text?: string) => {
         const messageText = text || message;
-        if (messageText.trim()) {
-            if (chatId) {
-                // Send to Firestore
+        if (!messageText.trim() || isSending) return;
+
+        setIsSending(true);
+        setMessage("");
+
+        try {
+            let chatIdToUse = activeChatId;
+
+            // If no chat exists yet, create one first
+            if (!chatIdToUse && recipientId && currentUserId) {
+                console.log("Creating new chat with recipient:", recipientId);
+                chatIdToUse = await ChatService.createIndividualChat(
+                    currentUserId,
+                    recipientId
+                );
+                setActiveChatId(chatIdToUse);
+            }
+
+            // Send the message
+            if (chatIdToUse) {
                 await sendFirestoreMessage(messageText.trim());
             }
-            setMessage("");
+        } catch (error) {
+            console.error("Error sending message:", error);
+            setMessage(messageText); // Restore message on error
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -318,12 +345,14 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                 <KeyboardAvoidingView
                     style={[
                         styles.keyboardAvoidingView,
-                        isKeyboardVisible && { paddingBottom: insets.bottom + hp(6) }
+                        isKeyboardVisible && {
+                            paddingBottom: insets.bottom
+                        }
                     ]}
                     behavior={behavior}
                     keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
                 >
-                    {messagesLoading && chatId ? (
+                    {messagesLoading && activeChatId ? (
                         <View style={styles.loadingContainer}>
                             <ActivityIndicator size="large" color="#517DA2" />
                         </View>

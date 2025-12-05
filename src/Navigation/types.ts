@@ -12,6 +12,7 @@ export type MainStackParamList = {
     Home: undefined;
     Chat: { 
         chatId?: string; 
+        recipientId?: string; // For new chats that haven't been created yet
         name: string;
         avatar?: string;
         avatarColor?: string;

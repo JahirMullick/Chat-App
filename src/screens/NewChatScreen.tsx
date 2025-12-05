@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MainStackParamList } from "../Navigation/types";
-import { ChatService } from "../services/firestore";
 import UserService from "../services/firestore/userService";
 import { UserProfile } from "../types/firestore.types";
 
@@ -58,30 +57,18 @@ export default function NewChatScreen() {
         }
     }, [currentUser?.uid]);
 
-    // Handle user selection
+    // Handle user selection - navigate to chat without creating it yet
     const handleUserSelect = async (user: UserProfile) => {
         if (!currentUser) return;
 
-        setIsCreatingChat(true);
-
-        try {
-            // Check if chat already exists or create a new one
-            const chatId = await ChatService.createIndividualChat(
-                currentUser.uid,
-                user.uid
-            );
-
-            // Navigate to chat screen
-            navigation.replace("Chat", {
-                chatId,
-                name: user.displayName || user.email || "Unknown",
-                avatarColor: getRandomColor(user.uid),
-                isOnline: user.isOnline,
-            });
-        } catch (error) {
-            console.error("Error creating chat:", error);
-            setIsCreatingChat(false);
-        }
+        // Navigate to chat screen with user info (chat will be created on first message)
+        navigation.replace("Chat", {
+            chatId: undefined, // No chat created yet
+            recipientId: user.uid, // Pass recipient ID for creating chat later
+            name: user.displayName || user.email || "Unknown",
+            avatarColor: getRandomColor(user.uid),
+            isOnline: user.isOnline,
+        });
     };
 
     // Generate a random color based on user ID
