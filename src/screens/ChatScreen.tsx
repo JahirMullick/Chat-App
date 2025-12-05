@@ -246,6 +246,13 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                     </View>
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                    style={styles.headerAction}
+                    onPress={() => alert("Starting call...")}
+                >
+                    <Ionicons name="call-outline" size={22} color="#fff" />
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.headerAction} onPress={openOptionsModal}>
                     <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
                 </TouchableOpacity>
