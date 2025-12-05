@@ -11,7 +11,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatItem, { ChatItemType } from "../components/ChatItem";
@@ -38,6 +38,10 @@ const formatTime = (date: Date): string => {
     }
 };
 
+
+
+
+
 // Tab type for display
 type TabDisplay = {
     label: string;
@@ -51,6 +55,7 @@ const defaultTabs: TabDisplay[] = [
 ];
 
 function HomeScreen() {
+
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState("All");
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
@@ -93,7 +98,7 @@ function HomeScreen() {
     const { storyGroups, loading: storiesLoading } = useStories();
     const { tabs: firestoreTabs, loading: tabsLoading } = useTabs();
 
-    // Track online status
+    // Track online status (handles AppState changes automatically)
     useOnlineStatus();
 
     // Story type for display
