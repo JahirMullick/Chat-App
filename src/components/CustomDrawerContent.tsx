@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     },
     menuSection: {
         flex: 1,
-        paddingHorizontal: 10,
+        // paddingHorizontal: 10,
     },
     menuItem: {
         flexDirection: "row",
