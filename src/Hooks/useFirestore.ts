@@ -1,5 +1,6 @@
 import auth from "@react-native-firebase/auth";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import {
     Chat,
     ChatService,
@@ -376,10 +377,11 @@ export const useTabs = () => {
 };
 
 /**
- * Hook to manage online status
+ * Hook to manage online status based on AppState
  */
 export const useOnlineStatus = () => {
     const userId = useCurrentUserId();
+    const appState = useRef(AppState.currentState);
 
     useEffect(() => {
         if (!userId) return;
@@ -387,8 +389,30 @@ export const useOnlineStatus = () => {
         // Set online when hook mounts
         UserService.setOnlineStatus(userId, true).catch(console.error);
 
-        // Set offline when app is closed or hook unmounts
+        // Listen to app state changes
+        const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+            if (
+                appState.current.match(/inactive|background/) &&
+                nextAppState === 'active'
+            ) {
+                // App came to foreground - set online
+                console.log('App is active - setting user online');
+                UserService.setOnlineStatus(userId, true).catch(console.error);
+            } else if (
+                appState.current === 'active' &&
+                nextAppState.match(/inactive|background/)
+            ) {
+                // App went to background - set offline
+                console.log('App is in background - setting user offline');
+                UserService.setOnlineStatus(userId, false).catch(console.error);
+            }
+
+            appState.current = nextAppState;
+        });
+
+        // Set offline when hook unmounts (user logs out)
         return () => {
+            subscription.remove();
             UserService.setOnlineStatus(userId, false).catch(console.error);
         };
     }, [userId]);
