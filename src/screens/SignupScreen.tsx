@@ -16,6 +16,7 @@ import {
     View,
 } from "react-native";
 import { AuthStackParamList } from "../Navigation/types";
+import { UserService } from "../services/firestore";
 
 type SignupScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, "Signup">;
 
@@ -71,6 +72,13 @@ export default function SignupScreen() {
             // Update user profile with display name
             await userCredential.user.updateProfile({
                 displayName: name.trim(),
+            });
+
+            // Sync user to Firestore with the display name
+            await UserService.createOrUpdateUser(userCredential.user.uid, {
+                email: email.trim(),
+                displayName: name.trim(),
+                photoURL: null,
             });
 
             console.log('Account created successfully!');
