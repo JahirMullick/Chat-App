@@ -30,6 +30,7 @@ interface DisplayMessage {
     id: string;
     text: string;
     time: string;
+    timestamp: any;
     isMe: boolean;
     isRead?: boolean;
     isEdited?: boolean;
@@ -37,6 +38,8 @@ interface DisplayMessage {
     videoThumbnail?: string;
     videoDuration?: string;
     videoParticipants?: string[];
+    showDateSeparator?: boolean;
+    dateLabel?: string;
 }
 
 // Helper function to format time
@@ -44,6 +47,34 @@ const formatMessageTime = (timestamp: any): string => {
     if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+// Helper function to format date for header
+const formatDateHeader = (timestamp: any): string => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+
+    // Reset time to start of day for accurate comparison
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (messageDate.getTime() === today.getTime()) {
+        return "Today";
+    } else if (messageDate.getTime() === yesterday.getTime()) {
+        return "Yesterday";
+    } else {
+        return date.toLocaleDateString([], { day: "numeric", month: "long", year: "numeric" });
+    }
+};
+
+// Helper function to get date key for grouping
+const getDateKey = (timestamp: any): string => {
+    if (!timestamp) return "";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toDateString(); // Returns like "Thu Dec 05 2024"
 };
 
 // Menu items for chat options modal
@@ -112,16 +143,35 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
         if (!chatId) {
             return []; // No chat selected
         }
-        return firestoreMessages.map((msg): DisplayMessage => ({
-            id: msg.id,
-            text: msg.text,
-            time: formatMessageTime(msg.timestamp),
-            isMe: msg.senderId === currentUserId,
-            isRead: msg.readBy?.includes(currentUserId || "") || msg.status === "read",
-            isEdited: msg.isEdited,
-            imageUri: msg.mediaType === "image" ? msg.mediaUrl : undefined,
-            videoThumbnail: msg.mediaType === "video" ? msg.mediaThumbnail : undefined,
-        })).reverse(); // Reverse to show oldest first
+        const messages = firestoreMessages.map((msg): DisplayMessage => {
+            // Check if message is read by someone other than the sender
+            const readByOthers = msg.readBy?.some(id => id !== msg.senderId) || false;
+
+            return {
+                id: msg.id,
+                text: msg.text,
+                time: formatMessageTime(msg.timestamp),
+                timestamp: msg.timestamp,
+                isMe: msg.senderId === currentUserId,
+                isRead: readByOthers, // True only if read by recipient(s)
+                isEdited: msg.isEdited,
+                imageUri: msg.mediaType === "image" ? msg.mediaUrl : undefined,
+                videoThumbnail: msg.mediaType === "video" ? msg.mediaThumbnail : undefined,
+            };
+        }).reverse(); // Reverse to show oldest first
+
+        // Add date separators
+        let lastDateKey = "";
+        return messages.map((msg) => {
+            const currentDateKey = getDateKey(msg.timestamp);
+            const showDateSeparator = currentDateKey !== lastDateKey;
+            lastDateKey = currentDateKey;
+            return {
+                ...msg,
+                showDateSeparator,
+                dateLabel: showDateSeparator ? formatDateHeader(msg.timestamp) : undefined,
+            };
+        });
     }, [firestoreMessages, chatId, currentUserId]);
 
     useEffect(() => {
@@ -143,64 +193,65 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
         const isMe = item.isMe;
 
         return (
-            <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
-                <View
-                    style={[
-                        styles.messageBubble,
-                        isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
-                    ]}
-                >
-                    {item.videoThumbnail ? (
-                        <View style={styles.videoContainer}>
-                            <Image
-                                source={{ uri: item.videoThumbnail }}
-                                style={styles.videoThumbnail}
-                            />
-                            <View style={styles.videoOverlay}>
-                                <View style={styles.videoParticipants}>
-                                    {/* Participant avatars would go here */}
-                                </View>
-                                <Text style={styles.videoNames}>
-                                    {item.videoParticipants?.join(", ")}
-                                </Text>
-                                <Text style={styles.videoDuration}>{item.videoDuration}</Text>
-                            </View>
+            <>
+                {item.showDateSeparator && item.dateLabel && (
+                    <View style={styles.dateHeaderContainer}>
+                        <View style={styles.dateHeader}>
+                            <Text style={styles.dateHeaderText}>{item.dateLabel}</Text>
                         </View>
-                    ) : (
-                        <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
-                            {item.text}
-                        </Text>
-                    )}
-                    <View style={styles.messageFooter}>
-                        {item.isEdited && (
-                            <Text style={[styles.editedText, isMe && styles.timeTextMe]}>
-                                edited{" "}
+                    </View>
+                )}
+                <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
+                    <View
+                        style={[
+                            styles.messageBubble,
+                            isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
+                        ]}
+                    >
+                        {item.videoThumbnail ? (
+                            <View style={styles.videoContainer}>
+                                <Image
+                                    source={{ uri: item.videoThumbnail }}
+                                    style={styles.videoThumbnail}
+                                />
+                                <View style={styles.videoOverlay}>
+                                    <View style={styles.videoParticipants}>
+                                        {/* Participant avatars would go here */}
+                                    </View>
+                                    <Text style={styles.videoNames}>
+                                        {item.videoParticipants?.join(", ")}
+                                    </Text>
+                                    <Text style={styles.videoDuration}>{item.videoDuration}</Text>
+                                </View>
+                            </View>
+                        ) : (
+                            <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
+                                {item.text}
                             </Text>
                         )}
-                        <Text style={[styles.timeText, isMe && styles.timeTextMe]}>
-                            {item.time}
-                        </Text>
-                        {isMe && (
-                            <Ionicons
-                                name={item.isRead ? "checkmark-done" : "checkmark"}
-                                size={16}
-                                color="#4CAF50"
-                                style={styles.readIcon}
-                            />
-                        )}
+                        <View style={styles.messageFooter}>
+                            {item.isEdited && (
+                                <Text style={[styles.editedText, isMe && styles.timeTextMe]}>
+                                    edited{" "}
+                                </Text>
+                            )}
+                            <Text style={[styles.timeText, isMe && styles.timeTextMe]}>
+                                {item.time}
+                            </Text>
+                            {isMe && (
+                                <Ionicons
+                                    name={item.isRead ? "checkmark-done" : "checkmark"}
+                                    size={16}
+                                    color="#4CAF50"
+                                    style={styles.readIcon}
+                                />
+                            )}
+                        </View>
                     </View>
                 </View>
-            </View>
+            </>
         );
     };
-
-    const renderDateHeader = () => (
-        <View style={styles.dateHeaderContainer}>
-            <View style={styles.dateHeader}>
-                <Text style={styles.dateHeaderText}>21 July</Text>
-            </View>
-        </View>
-    );
 
     const handleSendMessage = async (text?: string) => {
         const messageText = text || message;
@@ -282,7 +333,6 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                             renderItem={renderMessage}
                             keyExtractor={(item) => item.id}
                             contentContainerStyle={styles.messagesList}
-                            ListHeaderComponent={renderDateHeader}
                             showsVerticalScrollIndicator={false}
                             style={styles.messagesFlatList}
                         />
