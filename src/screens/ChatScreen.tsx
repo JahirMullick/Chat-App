@@ -10,6 +10,7 @@ import {
     Keyboard,
     KeyboardAvoidingView,
     Platform,
+    RefreshControl,
     StatusBar,
     StyleSheet,
     Text,
@@ -91,6 +92,7 @@ function ChatScreen() {
     const [message, setMessage] = useState("");
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     // Get current user ID
     const currentUserId = useCurrentUserId();
@@ -166,6 +168,20 @@ function ChatScreen() {
             hideListener.remove();
         };
     }, []);
+
+    const handleRefresh = useCallback(async () => {
+        if (!activeChatId) return;
+        setRefreshing(true);
+        try {
+            // The useMessages hook already subscribes to real-time updates
+            // This refresh is just for manual pull-to-refresh feedback
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            console.error("Error refreshing messages:", error);
+        } finally {
+            setRefreshing(false);
+        }
+    }, [activeChatId]);
 
     const handleSendMessage = async (text?: string) => {
         const messageText = text || message;
@@ -431,6 +447,14 @@ function ChatScreen() {
                             contentContainerStyle={styles.messagesList}
                             showsVerticalScrollIndicator={false}
                             style={styles.messagesFlatList}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={handleRefresh}
+                                    tintColor="#517DA2"
+                                    colors={["#517DA2"]}
+                                />
+                            }
                         />
                     )}
 
