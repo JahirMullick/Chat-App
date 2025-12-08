@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 const tabs = [
     { label: "All" },
-    { label: "Groups", count: 120 },
+    { label: "Groups", count: 10 },
     { label: "Channels", count: 3 },
     { label: "Bots", count: 2 },
 ];

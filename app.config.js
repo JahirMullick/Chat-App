@@ -6,7 +6,7 @@ export default {
         slug: "testchat",
         version: "1.0.0",
         orientation: "portrait",
-        icon: "./assets/images/icon.png",
+        icon: "./assets/images/logo.png",
         scheme: "testchat",
         userInterfaceStyle: "automatic",
         newArchEnabled: true,
