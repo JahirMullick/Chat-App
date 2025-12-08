@@ -80,24 +80,28 @@ export const ChatService = {
             });
 
             // Create userChat entries for both users
+            console.log(`Creating userChat entries for participants:`, participants);
             const batch = firestore().batch();
             
             for (const userId of participants) {
                 const userChatRef = ChatService.getUserChatsCollection(userId).doc(chatRef.id);
+                const isHidden = userId !== currentUserId;
+                console.log(`Setting userChat for ${userId}: isHidden = ${isHidden}`);
                 batch.set(userChatRef, {
                     chatId: chatRef.id,
                     unreadCount: 0,
                     isMuted: false,
                     isPinned: false,
                     isArchived: false,
-                    isHidden: userId !== currentUserId, // Hide for recipient until they send message
+                    isHidden: isHidden, // Hide for recipient until message is sent
                     lastReadAt: null,
                     joinedAt: now,
                 });
             }
 
             await batch.commit();
-            console.log("Individual chat created:", chatRef.id);
+            console.log("✅ Individual chat created:", chatRef.id);
+            console.log(`✅ UserChat documents created for:`, participants);
             return chatRef.id;
         } catch (error) {
             console.error("Error creating individual chat:", error);
@@ -536,17 +540,62 @@ export const ChatService = {
     },
 
     /**
-     * Unhide chat for a user (called when they send their first message)
+     * Unhide chat for all participants (called when a message is sent)
      */
     unhideChat: async (userId: string, chatId: string): Promise<void> => {
         try {
-            await ChatService.getUserChatsCollection(userId).doc(chatId).update({
-                isHidden: false,
+            console.log(`🔓 Starting unhideChat for chatId: ${chatId}`);
+            
+            // Get chat to find all participants
+            const chat = await ChatService.getChatById(chatId);
+            if (!chat) {
+                console.error("❌ Chat not found:", chatId);
+                return;
+            }
+
+            console.log(`📋 Chat found with ${chat.participants.length} participants:`, chat.participants);
+
+            // Unhide for all participants individually
+            const unhidePromises = chat.participants.map(async (participantId) => {
+                try {
+                    const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
+                    
+                    // Get current document
+                    const userChatDoc = await userChatRef.get();
+                    
+                    if (userChatDoc.exists()) {
+                        const currentData = userChatDoc.data();
+                        console.log(`📄 Current data for ${participantId}:`, {
+                            isHidden: currentData?.isHidden,
+                            chatId: currentData?.chatId
+                        });
+                        
+                        // Use set with merge to ensure it works even if fields are missing
+                        await userChatRef.set({
+                            isHidden: false,
+                        }, { merge: true });
+                        
+                        console.log(`✅ Chat unhidden for participant: ${participantId}`);
+                        
+                        // Verify the update
+                        const verifyDoc = await userChatRef.get();
+                        const verifyData = verifyDoc.data();
+                        console.log(`✔️  Verified isHidden for ${participantId}:`, verifyData?.isHidden);
+                    } else {
+                        console.error(`❌ UserChat document NOT FOUND for participant: ${participantId}, chat: ${chatId}`);
+                        console.error(`   Path: userChats/${participantId}/chats/${chatId}`);
+                    }
+                } catch (err) {
+                    console.error(`❌ Error unhiding for participant ${participantId}:`, err);
+                    console.error(`   Error details:`, JSON.stringify(err, null, 2));
+                }
             });
-            console.log("Chat unhidden for user:", userId);
+
+            await Promise.all(unhidePromises);
+            console.log("✅ Chat unhiding completed for all participants");
         } catch (error) {
-            console.error("Error unhiding chat:", error);
-            throw error;
+            console.error("❌ Error in unhideChat:", error);
+            console.error("   Error details:", JSON.stringify(error, null, 2));
         }
     },
 };

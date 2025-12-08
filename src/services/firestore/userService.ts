@@ -134,7 +134,7 @@ export const UserService = {
      */
     updateProfile: async (
         userId: string,
-        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber">>
+        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken">>
     ): Promise<void> => {
         try {
             await UserService.getDocRef(userId).update({

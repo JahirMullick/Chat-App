@@ -161,6 +161,7 @@ export const useMessages = (chatId: string | null) => {
 
     useEffect(() => {
         if (!chatId) {
+            setMessages([]);
             setLoading(false);
             return;
         }
@@ -183,7 +184,7 @@ export const useMessages = (chatId: string | null) => {
         );
 
         return unsubscribe;
-    }, [chatId]);
+    }, [chatId, userId]);
 
     // Mark messages as read when viewing
     useEffect(() => {

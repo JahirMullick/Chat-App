@@ -12,6 +12,8 @@ export interface UserProfile {
     updatedAt: FirebaseFirestoreTypes.Timestamp;
     phoneNumber?: string | null;
     bio?: string;
+    pushToken?: string;
+    lastTokenUpdate?: FirebaseFirestoreTypes.Timestamp;
 }
 
 // Story types

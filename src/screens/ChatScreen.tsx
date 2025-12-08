@@ -201,6 +201,10 @@ function ChatScreen() {
                     recipientId
                 );
                 setActiveChatId(chatIdToUse);
+
+                // Wait a brief moment for React to process the state update
+                // and establish the message subscription before sending
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
 
             // Send the message - use MessageService directly with the new chatId

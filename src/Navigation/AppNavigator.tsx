@@ -1,7 +1,7 @@
 import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import { SplashScreen } from "../screens";
 import { TabService, testFirestoreConnection, UserService } from "../services/firestore";
 import { SessionStorage } from "../utils/storage";
@@ -11,7 +11,7 @@ import { RootStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function AppNavigator() {
+const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
     const [showSplash, setShowSplash] = useState(true);
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -78,7 +78,7 @@ export default function AppNavigator() {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer ref={ref}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
                     <Stack.Screen name="Main" component={MainStack} />
@@ -88,4 +88,6 @@ export default function AppNavigator() {
             </Stack.Navigator>
         </NavigationContainer>
     );
-}
+});
+
+export default AppNavigator;

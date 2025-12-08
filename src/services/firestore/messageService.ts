@@ -1,5 +1,6 @@
 import firestore from "@react-native-firebase/firestore";
 import { Message, MessageStatus } from "../../types/firestore.types";
+import NotificationService from "../notificationService";
 import { ChatService } from "./chatService";
 
 const CHATS_COLLECTION = "chats";
@@ -68,17 +69,42 @@ export const MessageService = {
 
             // Add message to subcollection
             const messageRef = await MessageService.getCollection(chatId).add(messageData);
+            console.log("✅ Message added to Firestore:", messageRef.id);
 
             // Update chat's last message
             await ChatService.updateLastMessage(chatId, text, senderId);
+            console.log("✅ Chat lastMessage updated");
 
             // Increment unread counts for other participants
             await ChatService.incrementUnreadCounts(chatId, senderId);
+            console.log("✅ Unread counts incremented");
 
             // Unhide chat for all participants who have it hidden
+            console.log("🔓 Starting unhideChat...");
             await ChatService.unhideChat(senderId, chatId);
+            console.log("✅ UnhideChat completed");
 
-            console.log("Message sent:", messageRef.id);
+            // Send push notification to other participants
+            try {
+                const chatDoc = await firestore().collection(CHATS_COLLECTION).doc(chatId).get();
+                const chatData = chatDoc.data();
+                
+                if (chatData?.participants) {
+                    await NotificationService.sendChatNotification(
+                        chatId,
+                        senderId,
+                        senderName,
+                        text,
+                        chatData.participants
+                    );
+                    console.log("✅ Push notifications sent");
+                }
+            } catch (notifError) {
+                console.error("Error sending push notification:", notifError);
+                // Don't throw - notification failure shouldn't block message sending
+            }
+
+            console.log("✅ Message sent successfully:", messageRef.id);
             return messageRef.id;
         } catch (error) {
             console.error("Error sending message:", error);
