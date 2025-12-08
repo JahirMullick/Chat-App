@@ -89,6 +89,7 @@ export interface Message {
         senderName: string;
     };
     readBy: string[]; // userIds who have read this message
+    deletedFor?: string[]; // userIds who deleted this message for themselves
 }
 
 // User's chat metadata (for each user's perspective of a chat)
@@ -98,6 +99,7 @@ export interface UserChat {
     isMuted: boolean;
     isPinned: boolean;
     isArchived: boolean;
+    isHidden: boolean; // Hide chat until recipient sends first message
     lastReadAt: FirebaseFirestoreTypes.Timestamp | null;
     joinedAt: FirebaseFirestoreTypes.Timestamp;
 }

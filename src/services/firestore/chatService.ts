@@ -1,11 +1,12 @@
 import firestore from "@react-native-firebase/firestore";
 import {
-  Chat,
-  ChatCategory,
-  ChatType,
-  ParticipantInfo,
-  UserChat
+    Chat,
+    ChatCategory,
+    ChatType,
+    ParticipantInfo,
+    UserChat
 } from "../../types/firestore.types";
+import { MessageService } from "./messageService";
 import { UserService } from "./userService";
 
 const CHATS_COLLECTION = "chats";
@@ -89,6 +90,7 @@ export const ChatService = {
                     isMuted: false,
                     isPinned: false,
                     isArchived: false,
+                    isHidden: userId !== currentUserId, // Hide for recipient until they send message
                     lastReadAt: null,
                     joinedAt: now,
                 });
@@ -271,6 +273,12 @@ export const ChatService = {
 
                         for (const doc of snapshot.docs) {
                             const userChat = doc.data() as UserChat;
+                            
+                            // Skip hidden chats (chats where user hasn't sent message yet)
+                            if (userChat.isHidden) {
+                                continue;
+                            }
+                            
                             const chat = await ChatService.getChatById(userChat.chatId);
                             
                             if (chat) {
@@ -436,6 +444,7 @@ export const ChatService = {
                 isMuted: false,
                 isPinned: false,
                 isArchived: false,
+                isHidden: false, // Group chats are never hidden
                 lastReadAt: null,
                 joinedAt: now,
             });
@@ -489,6 +498,54 @@ export const ChatService = {
             console.log("User left chat:", chatId);
         } catch (error) {
             console.error("Error leaving chat:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Delete entire chat for all participants (hard delete)
+     */
+    deleteEntireChat: async (chatId: string): Promise<void> => {
+        try {
+            const chat = await ChatService.getChatById(chatId);
+            if (!chat) return;
+
+            const batch = firestore().batch();
+
+            // Delete userChat entries for all participants
+            for (const participantId of chat.participants) {
+                const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
+                batch.delete(userChatRef);
+            }
+
+            // Delete the chat document
+            batch.delete(ChatService.getDocRef(chatId));
+
+            await batch.commit();
+
+            // Delete all messages (in background, don't wait)
+            MessageService.deleteAllMessages(chatId).catch((err: Error) => 
+                console.error("Error deleting messages:", err)
+            );
+
+            console.log("Chat deleted entirely:", chatId);
+        } catch (error) {
+            console.error("Error deleting entire chat:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Unhide chat for a user (called when they send their first message)
+     */
+    unhideChat: async (userId: string, chatId: string): Promise<void> => {
+        try {
+            await ChatService.getUserChatsCollection(userId).doc(chatId).update({
+                isHidden: false,
+            });
+            console.log("Chat unhidden for user:", userId);
+        } catch (error) {
+            console.error("Error unhiding chat:", error);
             throw error;
         }
     },

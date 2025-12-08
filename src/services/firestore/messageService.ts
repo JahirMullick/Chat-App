@@ -75,6 +75,9 @@ export const MessageService = {
             // Increment unread counts for other participants
             await ChatService.incrementUnreadCounts(chatId, senderId);
 
+            // Unhide chat for all participants who have it hidden
+            await ChatService.unhideChat(senderId, chatId);
+
             console.log("Message sent:", messageRef.id);
             return messageRef.id;
         } catch (error) {
@@ -232,7 +235,7 @@ export const MessageService = {
     },
 
     /**
-     * Delete message
+     * Delete message (hard delete - removes for everyone)
      */
     deleteMessage: async (chatId: string, messageId: string): Promise<void> => {
         try {
@@ -240,6 +243,21 @@ export const MessageService = {
             console.log("Message deleted:", messageId);
         } catch (error) {
             console.error("Error deleting message:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Delete message for me only (soft delete - adds userId to deletedFor array)
+     */
+    deleteMessageForMe: async (chatId: string, messageId: string, userId: string): Promise<void> => {
+        try {
+            await MessageService.getDocRef(chatId, messageId).update({
+                deletedFor: firestore.FieldValue.arrayUnion(userId),
+            });
+            console.log("Message deleted for user:", userId);
+        } catch (error) {
+            console.error("Error deleting message for user:", error);
             throw error;
         }
     },

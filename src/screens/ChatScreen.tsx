@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     Image,
     ImageBackground,
@@ -17,14 +18,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatInput from "../components/ChatInput";
-import {
+import OptionsModal, {
     MenuItemType,
-    withOptionsModal,
+    OptionsModalRef
 } from "../components/hoc/withOptionsModal";
+import MessageBubble, { MessageBubbleData } from "../components/MessageBubble";
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
 import { useCurrentUserId, useMessages } from "../Hooks/useFirestore";
-import { ChatService } from "../services/firestore";
+import { ChatService, MessageService, UserService } from "../services/firestore";
 
 // Message type for display
 interface DisplayMessage {
@@ -33,6 +35,7 @@ interface DisplayMessage {
     time: string;
     timestamp: any;
     isMe: boolean;
+    senderId: string;
     isRead?: boolean;
     isEdited?: boolean;
     imageUri?: string;
@@ -78,42 +81,8 @@ const getDateKey = (timestamp: any): string => {
     return date.toDateString(); // Returns like "Thu Dec 05 2024"
 };
 
-// Menu items for chat options modal
-const chatMenuItems: MenuItemType[] = [
-    {
-        label: "Mute",
-        icon: "volume-high-outline",
-        showArrow: true,
-        onPress: () => alert("Mute options will appear here"),
-    },
-    {
-        label: "Video Call",
-        icon: "videocam-outline",
-        onPress: () => alert("Starting video call..."),
-    },
-    {
-        label: "Search",
-        icon: "search-outline",
-        onPress: () => alert("Opening search..."),
-    },
-    {
-        label: "Change Wallpaper",
-        icon: "image-outline",
-        onPress: () => alert("Change wallpaper options..."),
-    },
-    {
-        label: "Clear History",
-        icon: "brush-outline",
-        onPress: () => alert("Are you sure you want to clear chat history?"),
-    },
-    {
-        label: "Delete chat",
-        icon: "trash-outline",
-        onPress: () => alert("Are you sure you want to delete this chat?"),
-    },
-];
-
-function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) {
+function ChatScreen() {
+    const optionsModalRef = useRef<OptionsModalRef>(null);
     const navigation = useNavigation();
     const route = useRoute();
     const insets = useSafeAreaInsets();
@@ -141,7 +110,9 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
     const {
         messages: firestoreMessages,
         loading: messagesLoading,
-        sendMessage: sendFirestoreMessage
+        sendMessage: sendFirestoreMessage,
+        deleteMessage,
+        deleteMessageForMe,
     } = useMessages(activeChatId);
 
     // Convert Firestore messages to display format
@@ -159,6 +130,7 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                 time: formatMessageTime(msg.timestamp),
                 timestamp: msg.timestamp,
                 isMe: msg.senderId === currentUserId,
+                senderId: msg.senderId,
                 isRead: readByOthers, // True only if read by recipient(s)
                 isEdited: msg.isEdited,
                 imageUri: msg.mediaType === "image" ? msg.mediaUrl : undefined,
@@ -195,9 +167,179 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
         };
     }, []);
 
-    const renderMessage = ({ item }: { item: DisplayMessage }) => {
-        const isMe = item.isMe;
+    const handleSendMessage = async (text?: string) => {
+        const messageText = text || message;
+        if (!messageText.trim() || isSending || !currentUserId) return;
 
+        setIsSending(true);
+        setMessage("");
+
+        try {
+            let chatIdToUse = activeChatId;
+
+            // If no chat exists yet, create one first
+            if (!chatIdToUse && recipientId) {
+                console.log("Creating new chat with recipient:", recipientId);
+                chatIdToUse = await ChatService.createIndividualChat(
+                    currentUserId,
+                    recipientId
+                );
+                setActiveChatId(chatIdToUse);
+            }
+
+            // Send the message - use MessageService directly with the new chatId
+            if (chatIdToUse) {
+                const userProfile = await UserService.getUserById(currentUserId);
+                await MessageService.sendMessage(
+                    chatIdToUse,
+                    currentUserId,
+                    userProfile?.displayName || "Unknown",
+                    messageText.trim()
+                );
+            }
+        } catch (error) {
+            console.error("Error sending message:", error);
+            setMessage(messageText); // Restore message on error
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    // Delete message handlers
+    const handleDeleteMessageForMe = useCallback(async (messageId: string) => {
+        if (!activeChatId) return;
+        await deleteMessageForMe(messageId);
+    }, [activeChatId, deleteMessageForMe]);
+
+    const handleDeleteMessageForEveryone = useCallback(async (messageId: string) => {
+        if (!activeChatId) return;
+        Alert.alert(
+            "Delete Message",
+            "Delete this message for everyone?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => await deleteMessage(messageId),
+                },
+            ]
+        );
+    }, [activeChatId, deleteMessage]);
+
+    // Delete chat handlers
+    const handleDeleteChatForMe = useCallback(async () => {
+        if (!activeChatId || !currentUserId) return;
+        Alert.alert(
+            "Delete Chat",
+            "Delete this chat from your list? This won't delete it for the other person.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await ChatService.leaveChat(currentUserId, activeChatId);
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error("Error deleting chat:", error);
+                            Alert.alert("Error", "Failed to delete chat");
+                        }
+                    },
+                },
+            ]
+        );
+    }, [activeChatId, currentUserId, navigation]);
+
+    const handleDeleteChatForEveryone = useCallback(async () => {
+        if (!activeChatId) return;
+        Alert.alert(
+            "Delete Chat for Everyone",
+            "This will permanently delete the chat and all messages for everyone. This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await ChatService.deleteEntireChat(activeChatId);
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error("Error deleting chat:", error);
+                            Alert.alert("Error", "Failed to delete chat");
+                        }
+                    },
+                },
+            ]
+        );
+    }, [activeChatId, navigation]);
+
+    const handleClearHistory = useCallback(async () => {
+        if (!activeChatId) return;
+        Alert.alert(
+            "Clear Chat History",
+            "Delete all messages in this chat?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Clear",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await MessageService.deleteAllMessages(activeChatId);
+                        } catch (error) {
+                            console.error("Error clearing history:", error);
+                            Alert.alert("Error", "Failed to clear history");
+                        }
+                    },
+                },
+            ]
+        );
+    }, [activeChatId]);
+
+    // Chat menu items (using handlers defined above)
+    const chatMenuItems: MenuItemType[] = useMemo(() => [
+        {
+            label: "Mute",
+            icon: "volume-high-outline",
+            showArrow: true,
+            onPress: () => alert("Mute options will appear here"),
+        },
+        {
+            label: "Video Call",
+            icon: "videocam-outline",
+            onPress: () => alert("Starting video call..."),
+        },
+        {
+            label: "Search",
+            icon: "search-outline",
+            onPress: () => alert("Opening search..."),
+        },
+        {
+            label: "Change Wallpaper",
+            icon: "image-outline",
+            onPress: () => alert("Change wallpaper options..."),
+        },
+        {
+            label: "Clear History",
+            icon: "brush-outline",
+            onPress: handleClearHistory,
+        },
+        {
+            label: "Delete for Me",
+            icon: "trash-outline",
+            onPress: handleDeleteChatForMe,
+        },
+        {
+            label: "Delete for Everyone",
+            icon: "trash-outline",
+            onPress: handleDeleteChatForEveryone,
+        },
+    ], [handleClearHistory, handleDeleteChatForMe, handleDeleteChatForEveryone]);
+
+    const renderMessage = ({ item }: { item: DisplayMessage }) => {
         return (
             <>
                 {item.showDateSeparator && item.dateLabel && (
@@ -207,88 +349,13 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                         </View>
                     </View>
                 )}
-                <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
-                    <View
-                        style={[
-                            styles.messageBubble,
-                            isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
-                        ]}
-                    >
-                        {item.videoThumbnail ? (
-                            <View style={styles.videoContainer}>
-                                <Image
-                                    source={{ uri: item.videoThumbnail }}
-                                    style={styles.videoThumbnail}
-                                />
-                                <View style={styles.videoOverlay}>
-                                    <View style={styles.videoParticipants}>
-                                        {/* Participant avatars would go here */}
-                                    </View>
-                                    <Text style={styles.videoNames}>
-                                        {item.videoParticipants?.join(", ")}
-                                    </Text>
-                                    <Text style={styles.videoDuration}>{item.videoDuration}</Text>
-                                </View>
-                            </View>
-                        ) : (
-                            <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
-                                {item.text}
-                            </Text>
-                        )}
-                        <View style={styles.messageFooter}>
-                            {item.isEdited && (
-                                <Text style={[styles.editedText, isMe && styles.timeTextMe]}>
-                                    edited{" "}
-                                </Text>
-                            )}
-                            <Text style={[styles.timeText, isMe && styles.timeTextMe]}>
-                                {item.time}
-                            </Text>
-                            {isMe && (
-                                <Ionicons
-                                    name={item.isRead ? "checkmark-done" : "checkmark"}
-                                    size={16}
-                                    color="#4CAF50"
-                                    style={styles.readIcon}
-                                />
-                            )}
-                        </View>
-                    </View>
-                </View>
+                <MessageBubble
+                    message={item as MessageBubbleData}
+                    onDeleteForMe={handleDeleteMessageForMe}
+                    onDeleteForEveryone={handleDeleteMessageForEveryone}
+                />
             </>
         );
-    };
-
-    const handleSendMessage = async (text?: string) => {
-        const messageText = text || message;
-        if (!messageText.trim() || isSending) return;
-
-        setIsSending(true);
-        setMessage("");
-
-        try {
-            let chatIdToUse = activeChatId;
-
-            // If no chat exists yet, create one first
-            if (!chatIdToUse && recipientId && currentUserId) {
-                console.log("Creating new chat with recipient:", recipientId);
-                chatIdToUse = await ChatService.createIndividualChat(
-                    currentUserId,
-                    recipientId
-                );
-                setActiveChatId(chatIdToUse);
-            }
-
-            // Send the message
-            if (chatIdToUse) {
-                await sendFirestoreMessage(messageText.trim());
-            }
-        } catch (error) {
-            console.error("Error sending message:", error);
-            setMessage(messageText); // Restore message on error
-        } finally {
-            setIsSending(false);
-        }
     };
 
     return (
@@ -331,7 +398,7 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
                     <Ionicons name="call-outline" size={22} color="#fff" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.headerAction} onPress={openOptionsModal}>
+                <TouchableOpacity style={styles.headerAction} onPress={() => optionsModalRef.current?.open()}>
                     <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
                 </TouchableOpacity>
             </View>
@@ -380,11 +447,16 @@ function ChatScreenBase({ openOptionsModal }: { openOptionsModal: () => void }) 
 
                 </KeyboardAvoidingView>
             </ImageBackground>
+
+            {/* Options Modal */}
+            <OptionsModal
+                ref={optionsModalRef}
+                items={chatMenuItems}
+                position="top-right"
+            />
         </View >
     );
 }
-
-const ChatScreen = withOptionsModal(ChatScreenBase, chatMenuItems, "top-right");
 
 export default ChatScreen;
 

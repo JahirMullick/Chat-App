@@ -169,7 +169,11 @@ export const useMessages = (chatId: string | null) => {
         const unsubscribe = MessageService.subscribeToMessages(
             chatId,
             (msgs) => {
-                setMessages(msgs);
+                // Filter out messages deleted by current user
+                const visibleMessages = msgs.filter(
+                    msg => !msg.deletedFor?.includes(userId || "")
+                );
+                setMessages(visibleMessages);
                 setLoading(false);
             },
             (err) => {
@@ -232,7 +236,19 @@ export const useMessages = (chatId: string | null) => {
         [chatId]
     );
 
-    return { messages, loading, error, sendMessage, editMessage, deleteMessage };
+    const deleteMessageForMe = useCallback(
+        async (messageId: string) => {
+            if (!chatId || !userId) return;
+            try {
+                await MessageService.deleteMessageForMe(chatId, messageId, userId);
+            } catch (err) {
+                setError(err as Error);
+            }
+        },
+        [chatId, userId]
+    );
+
+    return { messages, loading, error, sendMessage, editMessage, deleteMessage, deleteMessageForMe };
 };
 
 /**
