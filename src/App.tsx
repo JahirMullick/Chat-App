@@ -18,8 +18,8 @@ GoogleSignin.configure({
 
 export default function App() {
     const navigationRef = useRef<NavigationContainerRef<any>>(null);
-    const notificationListener = useRef<any>();
-    const responseListener = useRef<any>();
+    const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
+    const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
 
     useEffect(() => {
         // Register for push notifications when user logs in
@@ -62,10 +62,10 @@ export default function App() {
         return () => {
             unsubscribe();
             if (notificationListener.current) {
-                Notifications.removeNotificationSubscription(notificationListener.current);
+                notificationListener.current.remove();
             }
             if (responseListener.current) {
-                Notifications.removeNotificationSubscription(responseListener.current);
+                responseListener.current.remove();
             }
         };
     }, []);
