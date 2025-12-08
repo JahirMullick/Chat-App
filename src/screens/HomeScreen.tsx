@@ -10,6 +10,7 @@ import {
     StatusBar,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from "react-native";
@@ -58,6 +59,8 @@ function HomeScreen() {
 
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState("All");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showSearchBar, setShowSearchBar] = useState(false);
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
     const optionsModalRef = useRef<OptionsModalRef>(null);
 
@@ -165,12 +168,25 @@ function HomeScreen() {
 
     // Filter chats based on active tab
     const filteredChats = useMemo(() => {
-        if (activeTab === "All") {
-            return chatsData;
+        let filtered = chatsData;
+
+        // Filter by tab category
+        if (activeTab !== "All") {
+            const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
+            filtered = filtered.filter((chat: ChatItemType) => chat.category === categoryKey);
         }
-        const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
-        return chatsData.filter((chat: ChatItemType) => chat.category === categoryKey);
-    }, [activeTab, chatsData]);
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter((chat: ChatItemType) =>
+                chat.name.toLowerCase().includes(query) ||
+                chat.message.toLowerCase().includes(query)
+            );
+        }
+
+        return filtered;
+    }, [activeTab, chatsData, searchQuery]);
 
     const renderStory = ({ item }: { item: StoryDisplay }) => (
         <TouchableOpacity style={styles.storyItem}>
@@ -214,8 +230,30 @@ function HomeScreen() {
                 title="Chats"
                 showDrawerIcon={true}
                 showSearch={true}
-                onSearchPress={() => console.log("Search pressed")}
+                onSearchPress={() => setShowSearchBar(!showSearchBar)}
             />
+
+            {/* Search Bar */}
+            {showSearchBar && (
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchInputWrapper}>
+                        <Ionicons name="search-outline" size={20} color="#65676B" style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search chats..."
+                            placeholderTextColor="#65676B"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoFocus
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
+                                <Ionicons name="close-circle" size={20} color="#65676B" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+            )}
 
             {/* Stories */}
             {/* <FlatList
@@ -310,6 +348,33 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
+    },
+    searchContainer: {
+        backgroundColor: "#fff",
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderBottomWidth: 0.5,
+        borderBottomColor: "#E5E5EA",
+    },
+    searchInputWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F0F0F0",
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        height: 40,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: "#000",
+        padding: 0,
+    },
+    clearButton: {
+        padding: 4,
     },
     storiesContainer: {
         maxHeight: 100,
