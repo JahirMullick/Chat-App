@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
+import ChatFoldersScreen from "../screens/ChatFoldersScreen";
 import ChatScreen from "../screens/ChatScreen";
 import NewChatScreen from "../screens/NewChatScreen";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -22,6 +23,7 @@ export default function MainStack() {
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="NewChat" component={NewChatScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="ChatFolders" component={ChatFoldersScreen} />
             <Stack.Screen name="Test" component={TestScreen} />
         </Stack.Navigator>
     );

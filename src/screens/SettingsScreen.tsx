@@ -118,7 +118,7 @@ export default function SettingsScreen() {
                 {
                     icon: "folder-outline",
                     label: "Chat Folders",
-                    onPress: () => console.log("Chat Folders"),
+                    onPress: () => navigation.navigate("ChatFolders" as never),
                 },
                 {
                     icon: "laptop-outline",
