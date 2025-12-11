@@ -4,6 +4,7 @@ import { NavigationContainerRef } from "@react-navigation/native";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import React, { useEffect, useRef } from "react";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./Navigation/AppNavigator";
 import NotificationService from "./services/notificationService";
@@ -72,7 +73,9 @@ export default function App() {
 
     return (
         <SafeAreaProvider>
-            <AppNavigator ref={navigationRef} />
+            <KeyboardProvider> //TODO: add this to fix the keyboard issue on chat screen
+                <AppNavigator ref={navigationRef} />
+            </KeyboardProvider>
         </SafeAreaProvider>
     );
 }

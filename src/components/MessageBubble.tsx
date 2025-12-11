@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import Colors from "../constants/colors";
 import {
     MenuItemType,
     withOptionsModal,
@@ -89,7 +90,7 @@ function MessageBubbleBase({
                         <Ionicons
                             name={message.isRead ? "checkmark-done" : "checkmark"}
                             size={16}
-                            color="#4CAF50"
+                            color={Colors.success}
                             style={styles.readIcon}
                         />
                     )}
@@ -111,7 +112,7 @@ const createMessageMenuItems = (
     items.push({
         label: "Delete for Me",
         icon: "trash-outline",
-        iconColor: "#FF5252",
+        iconColor: Colors.error,
         onPress: () => onDeleteForMe(message.id),
     });
 
@@ -119,8 +120,8 @@ const createMessageMenuItems = (
     if (message.isMe) {
         items.push({
             label: "Delete for Everyone",
-            icon: "trash",
-            iconColor: "#D32F2F",
+            icon: "trash-outline",
+            iconColor: Colors.errorDark,
             onPress: () => onDeleteForEveryone(message.id),
         });
     }
@@ -176,26 +177,26 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 12,
         elevation: 1,
-        shadowColor: "#000",
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
     },
     messageBubbleMe: {
-        backgroundColor: "#DCF8C6",
+        backgroundColor: Colors.messageBubbleMe,
         borderBottomRightRadius: 4,
     },
     messageBubbleOther: {
-        backgroundColor: "#FFFFFF",
+        backgroundColor: Colors.messageBubbleOther,
         borderBottomLeftRadius: 4,
     },
     messageText: {
         fontSize: 15,
-        color: "#000000",
+        color: Colors.black,
         lineHeight: 20,
     },
     messageTextMe: {
-        color: "#000000",
+        color: Colors.black,
     },
     messageFooter: {
         flexDirection: "row",
@@ -205,14 +206,14 @@ const styles = StyleSheet.create({
     },
     timeText: {
         fontSize: 11,
-        color: "#65676B",
+        color: Colors.textMuted,
     },
     timeTextMe: {
-        color: "#5A6B54",
+        color: Colors.messageTimeOther,
     },
     editedText: {
         fontSize: 11,
-        color: "#65676B",
+        color: Colors.textMuted,
         fontStyle: "italic",
     },
     readIcon: {
@@ -242,12 +243,12 @@ const styles = StyleSheet.create({
     },
     videoNames: {
         fontSize: 12,
-        color: "#FFFFFF",
+        color: Colors.white,
         fontWeight: "500",
     },
     videoDuration: {
         fontSize: 11,
-        color: "#FFFFFF",
+        color: Colors.white,
         marginTop: 2,
     },
 });

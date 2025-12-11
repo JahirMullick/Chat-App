@@ -153,7 +153,7 @@ export const ChatService = {
                 name: groupName,
                 description: options?.description || "",
                 avatarUrl: options?.avatarUrl || "",
-                avatarColor: options?.avatarColor || "#007AFF",
+                avatarColor: options?.avatarColor || "#007AFF", // iOS blue default
                 category: options?.category || "groups",
                 admins: [creatorId],
             });

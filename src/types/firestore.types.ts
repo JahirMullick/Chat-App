@@ -114,6 +114,7 @@ export interface Tab {
     isActive: boolean;
     order: number;
     category?: ChatCategory;
+    chatIds?: string[]; // Array of chat IDs included in this folder
 }
 
 // Typing indicator

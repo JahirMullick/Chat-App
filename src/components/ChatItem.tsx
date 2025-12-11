@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 
 export type ChatItemType = {
@@ -13,6 +13,7 @@ export type ChatItemType = {
     isOnline?: boolean;
     messageStatus?: "sent" | "delivered" | "read";
     hasMention?: boolean;
+    avatarUrl?: string;
     avatarColor?: string;
     category?: "groups" | "channels" | "bots" | "design" | "books" | "ai" | "sign";
 };
@@ -39,12 +40,25 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
         }
     };
 
+    // Helper function to get initials from name
+    const getInitials = (name: string): string => {
+        const words = name.trim().split(/\s+/);
+        if (words.length >= 2) {
+            return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+        }
+        return name.charAt(0).toUpperCase();
+    };
+
     return (
         <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
             {/* Avatar */}
             <View style={styles.avatarContainer}>
                 <View style={[styles.avatar, { backgroundColor: item.avatarColor || "#007AFF" }]}>
-                    <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+                    {item.avatarUrl ? (
+                        <Image source={{ uri: item.avatarUrl }} style={styles.avatarImage} />
+                    ) : (
+                        <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
+                    )}
                 </View>
                 {item.isOnline && <View style={styles.onlineBadge} />}
             </View>
@@ -116,6 +130,11 @@ const styles = StyleSheet.create({
         borderRadius: 28,
         justifyContent: "center",
         alignItems: "center",
+        overflow: "hidden",
+    },
+    avatarImage: {
+        width: 56,
+        height: 56,
     },
     avatarText: {
         fontSize: 22,

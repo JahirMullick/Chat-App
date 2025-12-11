@@ -26,7 +26,7 @@ export const NotificationService = {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
+        lightColor: '#FF231F7C', // Keep as is - this is a notification system color
       });
     }
 

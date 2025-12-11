@@ -7,6 +7,7 @@ import {
     View,
     ViewStyle,
 } from "react-native";
+import Colors from "../constants/colors";
 import Logo from "./icons/Logo";
 
 interface ChatInputProps {
@@ -54,14 +55,14 @@ export default function ChatInput({
                     onPress={onEmojiPress}
                     activeOpacity={0.6}
                 >
-                    <Ionicons name="happy-outline" size={26} color="#8E8E93" />
+                    <Ionicons name="happy-outline" size={26} color={Colors.iconGray} />
                 </TouchableOpacity>
 
                 {/* Text Input */}
                 <TextInput
                     style={styles.textInput}
                     placeholder={placeholder}
-                    placeholderTextColor="#8E8E93"
+                    placeholderTextColor={Colors.iconGray}
                     value={text}
                     onChangeText={setText}
                     multiline
@@ -86,7 +87,7 @@ export default function ChatInput({
                             onPress={onAttachPress}
                             activeOpacity={0.6}
                         >
-                            <Ionicons name="attach" size={26} color="#8E8E93" />
+                            <Ionicons name="attach" size={26} color={Colors.iconGray} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -95,7 +96,7 @@ export default function ChatInput({
                             activeOpacity={0.6}
                         >
                             <View style={styles.cameraIcon}>
-                                <Ionicons name="camera-outline" size={24} color="#8E8E93" />
+                                <Ionicons name="camera-outline" size={24} color={Colors.iconGray} />
                             </View>
                         </TouchableOpacity>
                     </>
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     textInput: {
         flex: 1,
         fontSize: 17,
-        color: "#000",
+        color: Colors.black,
         paddingVertical: 10,
         paddingHorizontal: 4,
         maxHeight: 100,
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
         height: 32,
         borderRadius: 16,
         borderWidth: 1.5,
-        borderColor: "#8E8E93",
+        borderColor: Colors.iconGray,
         justifyContent: "center",
         alignItems: "center",
     },

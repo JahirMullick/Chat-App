@@ -24,6 +24,7 @@ import OptionsModal, {
     OptionsModalRef
 } from "../components/hoc/withOptionsModal";
 import MessageBubble, { MessageBubbleData } from "../components/MessageBubble";
+import Colors from "../constants/colors";
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
 import { useCurrentUserId, useMessages } from "../Hooks/useFirestore";
@@ -102,7 +103,7 @@ function ChatScreen() {
     const recipientId = (route.params as any)?.recipientId; // For new chats
     const chatName = (route.params as any)?.name || "Chat";
     const chatAvatar = (route.params as any)?.avatar;
-    const avatarColor = (route.params as any)?.avatarColor || "#4CAF50";
+    const avatarColor = (route.params as any)?.avatarColor || Colors.avatarDefault;
     const isOnline = (route.params as any)?.isOnline ?? true;
 
     // Track current chatId (may be null initially for new chats)
@@ -380,7 +381,7 @@ function ChatScreen() {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#517DA2" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -388,7 +389,7 @@ function ChatScreen() {
                     style={styles.backButton}
                     onPress={() => navigation.goBack()}
                 >
-                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                    <Ionicons name="arrow-back" size={24} color={Colors.white} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.headerProfile}>
@@ -415,11 +416,11 @@ function ChatScreen() {
                     style={styles.headerAction}
                     onPress={() => alert("Starting call...")}
                 >
-                    <Ionicons name="call-outline" size={22} color="#fff" />
+                    <Ionicons name="call-outline" size={22} color={Colors.white} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.headerAction} onPress={() => optionsModalRef.current?.open()}>
-                    <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
+                    <Ionicons name="ellipsis-vertical" size={24} color={Colors.white} />
                 </TouchableOpacity>
             </View>
 
@@ -441,7 +442,7 @@ function ChatScreen() {
                 >
                     {messagesLoading && activeChatId ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#517DA2" />
+                            <ActivityIndicator size="large" color={Colors.primary} />
                         </View>
                     ) : (
                         <FlatList
@@ -455,8 +456,8 @@ function ChatScreen() {
                                 <RefreshControl
                                     refreshing={refreshing}
                                     onRefresh={handleRefresh}
-                                    tintColor="#517DA2"
-                                    colors={["#517DA2"]}
+                                    tintColor={Colors.primary}
+                                    colors={[Colors.primary]}
                                 />
                             }
                         />
@@ -491,12 +492,12 @@ export default ChatScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#517DA2",
+        backgroundColor: Colors.primary,
         paddingHorizontal: 4,
         paddingBottom: 10,
     },
@@ -527,7 +528,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     avatarText: {
-        color: "#fff",
+        color: Colors.white,
         fontSize: 18,
         fontWeight: "600",
     },
@@ -535,12 +536,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     headerName: {
-        color: "#fff",
+        color: Colors.white,
         fontSize: 17,
         fontWeight: "600",
     },
     headerStatus: {
-        color: "rgba(255,255,255,0.8)",
+        color: Colors.whiteOpacity,
         fontSize: 13,
     },
     headerAction: {
@@ -564,13 +565,13 @@ const styles = StyleSheet.create({
         marginVertical: 12,
     },
     dateHeader: {
-        backgroundColor: "rgba(0,0,0,0.2)",
+        backgroundColor: Colors.shadowDark,
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: 12,
     },
     dateHeaderText: {
-        color: "#fff",
+        color: Colors.white,
         fontSize: 13,
         fontWeight: "500",
     },
@@ -594,16 +595,16 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 4,
     },
     messageBubbleOther: {
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
         borderBottomLeftRadius: 4,
     },
     messageText: {
         fontSize: 16,
-        color: "#000",
+        color: Colors.black,
         lineHeight: 22,
     },
     messageTextMe: {
-        color: "#000",
+        color: Colors.black,
     },
     messageFooter: {
         flexDirection: "row",
@@ -613,14 +614,14 @@ const styles = StyleSheet.create({
     },
     timeText: {
         fontSize: 12,
-        color: "#8E8E93",
+        color: Colors.textLight,
     },
     timeTextMe: {
-        color: "#6B9F5D",
+        color: Colors.messageTimeMe,
     },
     editedText: {
         fontSize: 12,
-        color: "#8E8E93",
+        color: Colors.textLight,
         fontStyle: "italic",
     },
     readIcon: {
@@ -642,18 +643,18 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         padding: 8,
-        backgroundColor: "rgba(0,0,0,0.3)",
+        backgroundColor: Colors.shadowDark,
     },
     videoParticipants: {
         flexDirection: "row",
     },
     videoNames: {
-        color: "#fff",
+        color: Colors.white,
         fontSize: 13,
         fontWeight: "600",
     },
     videoDuration: {
-        color: "rgba(255,255,255,0.8)",
+        color: Colors.whiteOpacity,
         fontSize: 12,
     },
     loadingContainer: {

@@ -96,6 +96,11 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                             } else {
                                 console.log("Navigate to:", item.route);
                             }
+
+                            // Close drawer after navigation
+                            setTimeout(() => {
+                                props.navigation.closeDrawer();
+                            }, 100);
                         }}
                         activeOpacity={0.7}
                     >

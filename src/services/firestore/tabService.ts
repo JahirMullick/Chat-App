@@ -239,6 +239,9 @@ export const TabService = {
                     count = totalCount;
                 } else if (tab.category && categoryCounts[tab.category] !== undefined) {
                     count = categoryCounts[tab.category];
+                } else if (tab.chatIds && tab.chatIds.length > 0) {
+                    // For custom folders, count the number of chatIds
+                    count = tab.chatIds.length;
                 }
 
                 batch.update(tabRef, { count });
@@ -247,6 +250,92 @@ export const TabService = {
             await batch.commit();
         } catch (error) {
             console.error("Error updating tab counts:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Add chats to a tab/folder
+     */
+    addChatsToTab: async (
+        userId: string,
+        tabId: string,
+        chatIds: string[]
+    ): Promise<void> => {
+        try {
+            const tabRef = TabService.getUserTabsCollection(userId).doc(tabId);
+            const tabDoc = await tabRef.get();
+            
+            if (!tabDoc.exists) {
+                throw new Error("Tab not found");
+            }
+
+            const currentChatIds = (tabDoc.data()?.chatIds as string[]) || [];
+            const uniqueChatIds = Array.from(new Set([...currentChatIds, ...chatIds]));
+
+            await tabRef.update({
+                chatIds: uniqueChatIds,
+                count: uniqueChatIds.length,
+            });
+
+            console.log("Chats added to tab:", tabId, chatIds);
+        } catch (error) {
+            console.error("Error adding chats to tab:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Remove chats from a tab/folder
+     */
+    removeChatsFromTab: async (
+        userId: string,
+        tabId: string,
+        chatIds: string[]
+    ): Promise<void> => {
+        try {
+            const tabRef = TabService.getUserTabsCollection(userId).doc(tabId);
+            const tabDoc = await tabRef.get();
+            
+            if (!tabDoc.exists) {
+                throw new Error("Tab not found");
+            }
+
+            const currentChatIds = (tabDoc.data()?.chatIds as string[]) || [];
+            const updatedChatIds = currentChatIds.filter(id => !chatIds.includes(id));
+
+            await tabRef.update({
+                chatIds: updatedChatIds,
+                count: updatedChatIds.length,
+            });
+
+            console.log("Chats removed from tab:", tabId, chatIds);
+        } catch (error) {
+            console.error("Error removing chats from tab:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Set chats for a tab/folder (replaces existing)
+     */
+    setChatsForTab: async (
+        userId: string,
+        tabId: string,
+        chatIds: string[]
+    ): Promise<void> => {
+        try {
+            const tabRef = TabService.getUserTabsCollection(userId).doc(tabId);
+            const uniqueChatIds = Array.from(new Set(chatIds));
+
+            await tabRef.update({
+                chatIds: uniqueChatIds,
+                count: uniqueChatIds.length,
+            });
+
+            console.log("Chats set for tab:", tabId, uniqueChatIds);
+        } catch (error) {
+            console.error("Error setting chats for tab:", error);
             throw error;
         }
     },

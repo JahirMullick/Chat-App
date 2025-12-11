@@ -19,6 +19,7 @@ import ChatItem, { ChatItemType } from "../components/ChatItem";
 import Header from "../components/Header";
 import OptionsModal, { MenuItemType, OptionsModalRef } from "../components/hoc/withOptionsModal";
 import PlusIcon from "../components/icons/Plus";
+import Colors from "../constants/colors";
 import { useChats, useCurrentUserId, useOnlineStatus, useStories, useTabs } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
 
@@ -37,6 +38,24 @@ const formatTime = (date: Date): string => {
     } else {
         return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
+};
+
+// Helper function to generate random color based on user ID
+const getAvatarColor = (userId: string): string => {
+    const colors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+        '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#52B788',
+        '#F06292', '#7986CB', '#4DB6AC', '#FFB74D', '#A1887F',
+        '#90CAF9', '#CE93D8', '#80CBC4', '#FFD54F', '#AED581'
+    ];
+
+    // Generate a consistent index based on userId
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
 };
 
 
@@ -70,28 +89,28 @@ function HomeScreen() {
             label: "New Message",
             subtitle: "Send a message to a contact",
             icon: "chatbubble-outline",
-            iconColor: "#2196F3",
+            iconColor: Colors.primaryAccent,
             onPress: () => navigation.navigate("NewChat"),
         },
         {
             label: "New Group",
             subtitle: "Create a group with your contacts",
             icon: "people-outline",
-            iconColor: "#4CAF50",
+            iconColor: Colors.success,
             onPress: () => console.log("New Group pressed"),
         },
         {
             label: "New Channel",
             subtitle: "Create a channel to broadcast",
             icon: "megaphone-outline",
-            iconColor: "#FF9800",
+            iconColor: Colors.warning,
             onPress: () => console.log("New Channel pressed"),
         },
         {
             label: "Secret Chat",
             subtitle: "End-to-end encrypted chat",
             icon: "lock-closed-outline",
-            iconColor: "#9C27B0",
+            iconColor: Colors.purple,
             onPress: () => console.log("Secret Chat pressed"),
         },
     ], [navigation]);
@@ -124,6 +143,16 @@ function HomeScreen() {
                 ? chat.participantDetails[otherParticipantId]
                 : null;
 
+            // Get avatar URL and color
+            const avatarUrl = chat.type === "group"
+                ? chat.avatarUrl
+                : otherParticipant?.photoURL;
+
+            // Use predefined color for groups, or generate random color for individuals
+            const avatarColor = chat.type === "group"
+                ? (chat.avatarColor || Colors.primaryAccent)
+                : (otherParticipantId ? getAvatarColor(otherParticipantId) : Colors.primaryAccent);
+
             return {
                 id: chat.id,
                 name: chat.type === "group"
@@ -137,7 +166,8 @@ function HomeScreen() {
                 isMuted: userChat.isMuted,
                 isOnline: otherParticipant?.isOnline,
                 isVerified: chat.isVerified,
-                avatarColor: chat.avatarColor || "#2196F3",
+                avatarUrl: avatarUrl || undefined,
+                avatarColor: avatarColor,
                 category: chat.category,
             };
         });
@@ -170,10 +200,22 @@ function HomeScreen() {
     const filteredChats = useMemo(() => {
         let filtered = chatsData;
 
-        // Filter by tab category
+        // Find the active tab from Firestore tabs
+        const activeTabData = firestoreTabs.find(tab => tab.label === activeTab);
+
+        // Filter by tab
         if (activeTab !== "All") {
-            const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
-            filtered = filtered.filter((chat: ChatItemType) => chat.category === categoryKey);
+            // Check if this is a custom folder with specific chatIds
+            if (activeTabData && activeTabData.chatIds && activeTabData.chatIds.length > 0) {
+                // Filter chats that are in this folder
+                filtered = filtered.filter((chat: ChatItemType) =>
+                    activeTabData.chatIds!.includes(chat.id)
+                );
+            } else {
+                // Filter by category for default tabs (Groups, Channels, Bots, etc.)
+                const categoryKey = activeTab.toLowerCase() as ChatItemType["category"];
+                filtered = filtered.filter((chat: ChatItemType) => chat.category === categoryKey);
+            }
         }
 
         // Filter by search query
@@ -186,16 +228,16 @@ function HomeScreen() {
         }
 
         return filtered;
-    }, [activeTab, chatsData, searchQuery]);
+    }, [activeTab, chatsData, searchQuery, firestoreTabs]);
 
     const renderStory = ({ item }: { item: StoryDisplay }) => (
         <TouchableOpacity style={styles.storyItem}>
             <View style={[styles.storyAvatar, item.hasNewStory && styles.storyAvatarActive]}>
-                <View style={[styles.storyImagePlaceholder, { backgroundColor: item.isMyStory ? "#E3F2FD" : "#2196F3" }]}>
+                <View style={[styles.storyImagePlaceholder, { backgroundColor: item.isMyStory ? "#E3F2FD" : Colors.primaryAccent }]}>
                     {item.isMyStory ? (
-                        <Ionicons name="person" size={24} color="#2196F3" />
+                        <Ionicons name="person" size={24} color={Colors.primaryAccent} />
                     ) : (
-                        <Ionicons name="paper-plane" size={24} color="#fff" />
+                        <Ionicons name="paper-plane" size={24} color={Colors.white} />
                     )}
                 </View>
                 {item.isMyStory && (
@@ -216,6 +258,7 @@ function HomeScreen() {
             onPress={() => navigation.navigate('Chat', {
                 chatId: item.id,
                 name: item.name,
+                avatar: item.avatarUrl,
                 avatarColor: item.avatarColor
             })}
         />
@@ -347,14 +390,14 @@ export default HomeScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
     },
     searchContainer: {
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderBottomWidth: 0.5,
-        borderBottomColor: "#E5E5EA",
+        borderBottomColor: Colors.borderMedium,
     },
     searchInputWrapper: {
         flexDirection: "row",
@@ -370,7 +413,7 @@ const styles = StyleSheet.create({
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: "#000",
+        color: Colors.black,
         padding: 0,
     },
     clearButton: {
@@ -378,7 +421,7 @@ const styles = StyleSheet.create({
     },
     storiesContainer: {
         maxHeight: 100,
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
     },
     storiesContent: {
         paddingHorizontal: 12,
@@ -394,12 +437,12 @@ const styles = StyleSheet.create({
         height: 60,
         borderRadius: 30,
         borderWidth: 2,
-        borderColor: "#E5E5EA",
+        borderColor: Colors.borderMedium,
         justifyContent: "center",
         alignItems: "center",
     },
     storyAvatarActive: {
-        borderColor: "#2196F3",
+        borderColor: Colors.primaryAccent,
     },
     storyImagePlaceholder: {
         width: 54,
@@ -416,14 +459,14 @@ const styles = StyleSheet.create({
     storyName: {
         marginTop: 4,
         fontSize: 11,
-        color: "#000",
+        color: Colors.black,
         textAlign: "center",
     },
     tabsContainer: {
         maxHeight: 40,
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
         borderBottomWidth: 0.5,
-        borderBottomColor: "#E5E5EA",
+        borderBottomColor: Colors.borderMedium,
     },
     tabsContent: {
         paddingHorizontal: 16,
@@ -436,19 +479,19 @@ const styles = StyleSheet.create({
     },
     tabText: {
         fontSize: 15,
-        color: "#8E8E93",
+        color: Colors.textLight,
         fontWeight: "500",
     },
     tabTextActive: {
-        color: "#2196F3",
+        color: Colors.primaryAccent,
     },
     tabCount: {
         fontSize: 15,
-        color: "#8E8E93",
+        color: Colors.textLight,
         fontWeight: "400",
     },
     tabCountActive: {
-        color: "#2196F3",
+        color: Colors.primaryAccent,
     },
     tabIndicator: {
         position: "absolute",
@@ -456,12 +499,12 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         height: 2,
-        backgroundColor: "#2196F3",
+        backgroundColor: Colors.primaryAccent,
         borderRadius: 1,
     },
     chatList: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
     },
     loadingContainer: {
         flex: 1,
@@ -474,10 +517,10 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: "#2196F3",
+        backgroundColor: Colors.primaryAccent,
         justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#2196F3",
+        shadowColor: Colors.primaryAccent,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -491,7 +534,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: "#8E8E93",
+        color: Colors.textLight,
         textAlign: "center",
     },
 });
