@@ -3,7 +3,7 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { NavigationContainerRef } from "@react-navigation/native";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./Navigation/AppNavigator";

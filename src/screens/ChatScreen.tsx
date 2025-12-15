@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -27,7 +27,7 @@ import MessageBubble, { MessageBubbleData } from "../components/MessageBubble";
 import Colors from "../constants/colors";
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
-import { useCurrentUserId, useMessages } from "../Hooks/useFirestore";
+import { useCurrentUserId, useMessages, useUserProfile } from "../Hooks/useFirestore";
 import { ChatService, MessageService, UserService } from "../services/firestore";
 
 // Message type for display
@@ -104,7 +104,9 @@ function ChatScreen() {
     const chatName = (route.params as any)?.name || "Chat";
     const chatAvatar = (route.params as any)?.avatar;
     const avatarColor = (route.params as any)?.avatarColor || Colors.avatarDefault;
-    const isOnline = (route.params as any)?.isOnline ?? true;
+
+    // Get recipient's profile to track online status in real-time
+    const { profile: recipientProfile } = useUserProfile(recipientId);
 
     // Track current chatId (may be null initially for new chats)
     const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId || null);
@@ -393,21 +395,24 @@ function ChatScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.headerProfile}>
-                    <View style={styles.headerAvatar}>
-                        {chatAvatar ? (
-                            <Image source={{ uri: chatAvatar }} style={styles.avatarImage} />
-                        ) : (
-                            <View style={[styles.avatarPlaceholder, { backgroundColor: avatarColor }]}>
-                                <Text style={styles.avatarText}>
-                                    {chatName.charAt(0).toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
+                    <View style={styles.headerAvatarContainer}>
+                        <View style={styles.headerAvatar}>
+                            {chatAvatar ? (
+                                <Image source={{ uri: chatAvatar }} style={styles.avatarImage} />
+                            ) : (
+                                <View style={[styles.avatarPlaceholder, { backgroundColor: avatarColor }]}>
+                                    <Text style={styles.avatarText}>
+                                        {chatName.charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                        {recipientProfile?.isOnline && <View style={styles.onlineBadge} />}
                     </View>
                     <View style={styles.headerInfo}>
                         <Text style={styles.headerName}>{chatName}</Text>
                         <Text style={styles.headerStatus}>
-                            {isOnline ? "online" : "last seen recently"}
+                            {recipientProfile?.isOnline ? "online" : "last seen recently"}
                         </Text>
                     </View>
                 </TouchableOpacity>
@@ -509,12 +514,26 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
     },
+    headerAvatarContainer: {
+        position: "relative",
+        marginRight: 12,
+    },
     headerAvatar: {
         width: 42,
         height: 42,
         borderRadius: 21,
-        marginRight: 12,
         overflow: "hidden",
+    },
+    onlineBadge: {
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: "#34C759",
+        borderWidth: 2,
+        borderColor: Colors.primary,
     },
     avatarImage: {
         width: "100%",
