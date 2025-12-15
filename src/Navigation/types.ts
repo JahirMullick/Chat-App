@@ -27,6 +27,9 @@ export type MainStackParamList = {
         phoneNumber?: string;
         username?: string;
     };
+    QrProfile: {
+        userId?: string;
+    };
     NewChat: undefined;
     Test: undefined;
     Profile: undefined;

@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ChatFoldersScreen from "../screens/ChatFoldersScreen";
 import ChatScreen from "../screens/ChatScreen";
 import NewChatScreen from "../screens/NewChatScreen";
+import QrProfileScreen from "../screens/QrProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import TestScreen from "../screens/TestScreen";
 import UserProfileScreen from "../screens/UserProfileScreen";
@@ -22,6 +23,7 @@ export default function MainStack() {
             <Stack.Screen name="Home" component={DrawerNavigator} />
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+            <Stack.Screen name="QrProfile" component={QrProfileScreen} />
             <Stack.Screen name="NewChat" component={NewChatScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="ChatFolders" component={ChatFoldersScreen} />

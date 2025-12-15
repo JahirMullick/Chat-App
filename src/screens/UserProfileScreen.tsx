@@ -164,6 +164,10 @@ export default function UserProfileScreen() {
         Alert.alert("Gift", "Send a gift to this user");
     };
 
+    const handleOpenQRCode = useCallback(() => {
+        navigation.navigate("QrProfile", { userId: recipientId });
+    }, [navigation, recipientId]);
+
     // Render media item
     const renderMediaItem = ({ item }: { item: MediaItem }) => (
         <TouchableOpacity style={styles.mediaItem} activeOpacity={0.8}>
@@ -294,8 +298,8 @@ export default function UserProfileScreen() {
                                 <Text style={styles.infoValue}>@{displayUsername}</Text>
                                 <Text style={styles.infoLabel}>Username</Text>
                             </View>
-                            <TouchableOpacity style={styles.qrButton}>
-                                <MaterialCommunityIcons name="qrcode" size={24} color={Colors.textSecondary} />
+                            <TouchableOpacity style={styles.qrButton} onPress={handleOpenQRCode}>
+                                <MaterialCommunityIcons name="qrcode" size={24} color={Colors.primary} />
                             </TouchableOpacity>
                         </View>
                     )}
