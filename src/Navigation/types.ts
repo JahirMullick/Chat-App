@@ -18,6 +18,15 @@ export type MainStackParamList = {
         avatarColor?: string;
         isOnline?: boolean;
     };
+    UserProfile: {
+        recipientId: string;
+        chatId?: string;
+        name: string;
+        avatar?: string;
+        avatarColor?: string;
+        phoneNumber?: string;
+        username?: string;
+    };
     NewChat: undefined;
     Test: undefined;
     Profile: undefined;

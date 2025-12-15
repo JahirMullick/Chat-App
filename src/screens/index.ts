@@ -7,4 +7,5 @@ export { default as NewChatScreen } from "./NewChatScreen";
 export { default as SettingsScreen } from "./SettingsScreen";
 export { default as SignupScreen } from "./SignupScreen";
 export { default as SplashScreen } from "./SplashScreen";
+export { default as UserProfileScreen } from "./UserProfileScreen";
 

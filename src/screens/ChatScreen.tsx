@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
@@ -28,6 +29,7 @@ import Colors from "../constants/colors";
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
 import { useCurrentUserId, useMessages, useUserProfile } from "../Hooks/useFirestore";
+import { MainStackParamList } from "../Navigation/types";
 import { ChatService, MessageService, UserService } from "../services/firestore";
 
 // Message type for display
@@ -85,7 +87,7 @@ const getDateKey = (timestamp: any): string => {
 
 function ChatScreen() {
     const optionsModalRef = useRef<OptionsModalRef>(null);
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
     const route = useRoute();
     const insets = useSafeAreaInsets();
     const behavior = useBehavior();
@@ -322,6 +324,20 @@ function ChatScreen() {
         );
     }, [activeChatId]);
 
+    // Navigate to user profile screen
+    const handleOpenProfile = useCallback(() => {
+        if (!recipientId) return;
+        navigation.navigate("UserProfile", {
+            recipientId,
+            chatId: activeChatId || undefined,
+            name: chatName,
+            avatar: chatAvatar,
+            avatarColor,
+            phoneNumber: recipientProfile?.phoneNumber || undefined,
+            username: recipientProfile?.displayName?.replace(/\s/g, "").toLowerCase(),
+        });
+    }, [recipientId, activeChatId, chatName, chatAvatar, avatarColor, recipientProfile, navigation]);
+
     // Chat menu items (using handlers defined above)
     const chatMenuItems: MenuItemType[] = useMemo(() => [
         {
@@ -394,7 +410,7 @@ function ChatScreen() {
                     <Ionicons name="arrow-back" size={24} color={Colors.white} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.headerProfile}>
+                <TouchableOpacity style={styles.headerProfile} onPress={handleOpenProfile}>
                     <View style={styles.headerAvatarContainer}>
                         <View style={styles.headerAvatar}>
                             {chatAvatar ? (
