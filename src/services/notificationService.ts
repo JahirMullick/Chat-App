@@ -34,13 +34,17 @@ export const NotificationService = {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       
+      console.log('📱 Current notification permission status:', existingStatus);
+      
       if (existingStatus !== 'granted') {
+        console.log('🔔 Requesting notification permissions...');
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
+        console.log('📱 New notification permission status:', finalStatus);
       }
       
       if (finalStatus !== 'granted') {
-        alert('Failed to get push token for push notification!');
+        console.warn('⚠️ Notification permission not granted');
         return null;
       }
       

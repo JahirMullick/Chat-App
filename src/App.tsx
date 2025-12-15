@@ -23,6 +23,19 @@ export default function App() {
     const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
 
     useEffect(() => {
+        // Request notification permissions on app startup
+        const requestNotificationPermissions = async () => {
+            try {
+                await NotificationService.registerForPushNotificationsAsync();
+                console.log('✅ Notification permissions requested');
+            } catch (error) {
+                console.error('❌ Error requesting notification permissions:', error);
+            }
+        };
+
+        // Request permissions immediately on app launch
+        requestNotificationPermissions();
+
         // Register for push notifications when user logs in
         const unsubscribe = auth().onAuthStateChanged(async (user) => {
             if (user) {
