@@ -16,6 +16,7 @@ export type ChatItemType = {
     avatarUrl?: string;
     avatarColor?: string;
     category?: "groups" | "channels" | "bots" | "design" | "books" | "ai" | "sign";
+    recipientId?: string;
 };
 
 interface ChatItemProps {

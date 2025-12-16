@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import {
     DrawerContentComponentProps,
@@ -8,12 +8,14 @@ import {
 import React from "react";
 import {
     Alert,
+    Image,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCurrentUserId, useUserProfile } from "../Hooks/useFirestore";
 import { SessionStorage } from "../utils/storage";
 
 const menuItems = [
@@ -28,7 +30,13 @@ const menuItems = [
 
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
     const insets = useSafeAreaInsets();
-    const currentUser = auth().currentUser;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    const currentUserId = useCurrentUserId();
+    const { profile: userProfile } = useUserProfile(currentUserId || undefined);
+
+    console.log("CustomDrawer - Auth photoURL:", currentUser?.photoURL);
+    console.log("CustomDrawer - Firestore photoURL:", userProfile?.photoURL);
 
     const handleLogout = async () => {
         Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -42,7 +50,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                         SessionStorage.clearSession();
 
                         // Sign out from Firebase
-                        await auth().signOut();
+                        await auth.signOut();
 
                         // Sign out from Google if signed in
                         try {
@@ -65,18 +73,28 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         >
             {/* User Profile Section */}
             <View style={styles.profileSection}>
-                <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                        {currentUser?.displayName?.charAt(0) ||
-                            currentUser?.email?.charAt(0)?.toUpperCase() ||
-                            "U"}
-                    </Text>
-                </View>
+                {userProfile?.photoURL ? (
+                    <Image
+                        source={{ uri: userProfile.photoURL }}
+                        style={styles.avatarImage}
+                        resizeMode="cover"
+                        onError={(error) => console.log("Image load error:", error)}
+                    />
+                ) : (
+                    <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>
+                            {userProfile?.displayName?.charAt(0) ||
+                                currentUser?.displayName?.charAt(0) ||
+                                currentUser?.email?.charAt(0)?.toUpperCase() ||
+                                "U"}
+                        </Text>
+                    </View>
+                )}
                 <Text style={styles.userName}>
-                    {currentUser?.displayName || "User"}
+                    {userProfile?.displayName || currentUser?.displayName || "User"}
                 </Text>
                 <Text style={styles.userEmail}>
-                    {currentUser?.email || ""}
+                    {userProfile?.email || currentUser?.email || ""}
                 </Text>
             </View>
 
@@ -146,6 +164,13 @@ const styles = StyleSheet.create({
         backgroundColor: "#007AFF",
         justifyContent: "center",
         alignItems: "center",
+        marginBottom: 12,
+        overflow: "hidden",
+    },
+    avatarImage: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
         marginBottom: 12,
     },
     avatarText: {

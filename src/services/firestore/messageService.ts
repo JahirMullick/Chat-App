@@ -1,4 +1,4 @@
-import firestore from "@react-native-firebase/firestore";
+import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { Message, MessageStatus } from "../../types/firestore.types";
 import NotificationService from "../notificationService";
 import { ChatService } from "./chatService";
@@ -14,7 +14,7 @@ export const MessageService = {
      * Get reference to messages subcollection for a chat
      */
     getCollection: (chatId: string) =>
-        firestore()
+        getFirestore()
             .collection(CHATS_COLLECTION)
             .doc(chatId)
             .collection(MESSAGES_SUBCOLLECTION),
@@ -23,7 +23,7 @@ export const MessageService = {
      * Get reference to a specific message document
      */
     getDocRef: (chatId: string, messageId: string) =>
-        firestore()
+        getFirestore()
             .collection(CHATS_COLLECTION)
             .doc(chatId)
             .collection(MESSAGES_SUBCOLLECTION)
@@ -50,7 +50,7 @@ export const MessageService = {
         }
     ): Promise<string> => {
         try {
-            const now = firestore.FieldValue.serverTimestamp();
+            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
 
             const messageData: Omit<Message, "id"> = {
                 chatId,
@@ -86,7 +86,7 @@ export const MessageService = {
 
             // Send push notification to other participants
             try {
-                const chatDoc = await firestore().collection(CHATS_COLLECTION).doc(chatId).get();
+                const chatDoc = await getFirestore().collection(CHATS_COLLECTION).doc(chatId).get();
                 const chatData = chatDoc.data();
                 
                 if (chatData?.participants) {
@@ -178,7 +178,7 @@ export const MessageService = {
     ): Promise<void> => {
         try {
             await MessageService.getDocRef(chatId, messageId).update({
-                readBy: firestore.FieldValue.arrayUnion(userId),
+                readBy: FirebaseFirestoreTypes.FieldValue.arrayUnion(userId),
             });
         } catch (error) {
             console.error("Error marking message as read:", error);
@@ -201,13 +201,13 @@ export const MessageService = {
 
             if (snapshot.empty) return;
 
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
             
             snapshot.docs.forEach(doc => {
                 const message = doc.data();
                 if (!message.readBy?.includes(userId)) {
                     batch.update(doc.ref, {
-                        readBy: firestore.FieldValue.arrayUnion(userId),
+                        readBy: FirebaseFirestoreTypes.FieldValue.arrayUnion(userId),
                     });
                 }
             });
@@ -252,7 +252,7 @@ export const MessageService = {
             await MessageService.getDocRef(chatId, messageId).update({
                 text: newText,
                 isEdited: true,
-                editedAt: firestore.FieldValue.serverTimestamp(),
+                editedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error editing message:", error);
@@ -279,7 +279,7 @@ export const MessageService = {
     deleteMessageForMe: async (chatId: string, messageId: string, userId: string): Promise<void> => {
         try {
             await MessageService.getDocRef(chatId, messageId).update({
-                deletedFor: firestore.FieldValue.arrayUnion(userId),
+                deletedFor: FirebaseFirestoreTypes.FieldValue.arrayUnion(userId),
             });
             console.log("Message deleted for user:", userId);
         } catch (error) {
@@ -300,7 +300,7 @@ export const MessageService = {
             // Delete in batches of 500 (Firestore limit)
             const batchSize = 500;
             const batches: FirebaseFirestoreTypes.WriteBatch[] = [];
-            let currentBatch = firestore().batch();
+            let currentBatch = getFirestore().batch();
             let operationCount = 0;
 
             snapshot.docs.forEach(doc => {
@@ -309,7 +309,7 @@ export const MessageService = {
 
                 if (operationCount >= batchSize) {
                     batches.push(currentBatch);
-                    currentBatch = firestore().batch();
+                    currentBatch = getFirestore().batch();
                     operationCount = 0;
                 }
             });
@@ -369,8 +369,5 @@ export const MessageService = {
         }
     },
 };
-
-// Import type for batch
-import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 
 export default MessageService;

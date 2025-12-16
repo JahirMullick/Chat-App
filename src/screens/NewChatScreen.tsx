@@ -1,34 +1,55 @@
-import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { getAuth } from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
     Image,
+    StatusBar,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Header from "../components/Header";
+import Colors from "../constants/colors";
 import { MainStackParamList } from "../Navigation/types";
 import UserService from "../services/firestore/userService";
 import { UserProfile } from "../types/firestore.types";
 
 export default function NewChatScreen() {
-    const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+    const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [isCreatingChat, setIsCreatingChat] = useState(false);
+    const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
-    const currentUser = auth().currentUser;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    // Load all users on mount
+    useEffect(() => {
+        loadAllUsers();
+    }, []);
+
+    const loadAllUsers = async () => {
+        setIsLoadingUsers(true);
+        try {
+            const users = await UserService.searchUsersByEmail("", currentUser?.uid);
+            setAllUsers(users);
+        } catch (error) {
+            console.error("Error loading users:", error);
+        } finally {
+            setIsLoadingUsers(false);
+        }
+    };
 
     // Debounced search function
     const handleSearch = useCallback(async (query: string) => {
@@ -104,21 +125,24 @@ export default function NewChatScreen() {
             style={styles.userItem}
             onPress={() => handleUserSelect(item)}
             disabled={isCreatingChat}
+            activeOpacity={0.7}
         >
-            {item.photoURL ? (
-                <Image source={{ uri: item.photoURL }} style={styles.avatar} />
-            ) : (
-                <View style={[styles.avatar, { backgroundColor: getRandomColor(item.uid) }]}>
-                    <Text style={styles.avatarText}>{getInitials(item)}</Text>
-                </View>
-            )}
+            <View style={{ position: "relative" }}>
+                {item.photoURL ? (
+                    <Image source={{ uri: item.photoURL }} style={styles.avatar} />
+                ) : (
+                    <View style={[styles.avatar, { backgroundColor: getRandomColor(item.uid) }]}>
+                        <Text style={styles.avatarText}>{getInitials(item)}</Text>
+                    </View>
+                )}
+                {item.isOnline && <View style={styles.onlineIndicator} />}
+            </View>
             <View style={styles.userInfo}>
                 <Text style={styles.userName}>
                     {item.displayName || "Unknown User"}
                 </Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
+                <Text style={styles.userEmail}>last seen recently</Text>
             </View>
-            {item.isOnline && <View style={styles.onlineIndicator} />}
         </TouchableOpacity>
     );
 
@@ -156,33 +180,32 @@ export default function NewChatScreen() {
         );
     };
 
+    // Display data - use search results if searching, otherwise show all users
+    const displayData = searchQuery.trim().length >= 3 ? searchResults : allUsers;
+
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>New Chat</Text>
-                <View style={styles.headerRight} />
-            </View>
+            <Header
+                title="New Message"
+                showBackButton
+                showSearch={false}
+                showDrawerIcon={false}
+            />
 
             {/* Search Input */}
             <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#8E8E93" style={styles.searchIcon} />
+                <Ionicons name="search" size={18} color={Colors.textSecondary} style={styles.searchIcon} />
                 <TextInput
                     style={styles.searchInput}
-                    placeholder="Search by email address..."
-                    placeholderTextColor="#8E8E93"
+                    placeholder="Search"
+                    placeholderTextColor={Colors.textSecondary}
                     value={searchQuery}
                     onChangeText={handleSearch}
-                    keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    autoFocus
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity
@@ -191,27 +214,53 @@ export default function NewChatScreen() {
                             setSearchResults([]);
                             setHasSearched(false);
                         }}
+                        style={styles.clearButton}
                     >
-                        <Ionicons name="close-circle" size={20} color="#8E8E93" />
+                        <Ionicons name="close-circle" size={18} color={Colors.textSecondary} />
                     </TouchableOpacity>
                 )}
             </View>
 
-            {/* Search hint */}
-            {searchQuery.length > 0 && searchQuery.length < 3 && (
-                <Text style={styles.searchHint}>
-                    Enter at least 3 characters to search
-                </Text>
-            )}
+            {/* Quick Actions */}
+            <View style={styles.quickActions}>
+                <TouchableOpacity style={styles.quickActionItem}>
+                    <View style={styles.quickActionIcon}>
+                        <Ionicons name="people" size={24} color={Colors.primary} />
+                    </View>
+                    <Text style={styles.quickActionText}>New Group</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.quickActionItem}>
+                    <View style={styles.quickActionIcon}>
+                        <MaterialCommunityIcons name="qrcode-scan" size={24} color={Colors.primary} />
+                    </View>
+                    <Text style={styles.quickActionText}>New Contact</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.quickActionItem}>
+                    <View style={styles.quickActionIcon}>
+                        <MaterialCommunityIcons name="bullhorn" size={24} color={Colors.primary} />
+                    </View>
+                    <Text style={styles.quickActionText}>New Channel</Text>
+                </TouchableOpacity>
+            </View>
+
+
+
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Sorted by last seen time</Text>
+            </View>
 
             {/* Results List */}
             <FlatList
-                data={searchResults}
+                data={displayData}
                 renderItem={renderUserItem}
                 keyExtractor={(item) => item.uid}
                 contentContainerStyle={styles.listContent}
                 ListEmptyComponent={renderEmptyState}
                 keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
             />
 
             {/* Loading overlay when creating chat */}
@@ -230,79 +279,92 @@ export default function NewChatScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
     },
-    header: {
+    headerAction: {
+        padding: 4,
+    },
+    quickActions: {
         flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#E5E5EA",
+        paddingVertical: 16,
+        paddingHorizontal: 8,
+        backgroundColor: Colors.white,
+        borderBottomWidth: 8,
+        borderBottomColor: Colors.gray50,
     },
-    backButton: {
-        width: 40,
-        height: 40,
+    quickActionItem: {
+        flex: 1,
+        alignItems: "center",
+    },
+    quickActionIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: Colors.backgroundAccent,
         justifyContent: "center",
         alignItems: "center",
-        marginLeft: -8,
+        marginBottom: 8,
     },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: "600",
-        color: "#000",
-    },
-    headerRight: {
-        width: 40,
+    quickActionText: {
+        fontSize: 12,
+        color: Colors.textPrimary,
+        textAlign: "center",
     },
     searchContainer: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#F2F2F7",
-        borderRadius: 12,
-        marginHorizontal: 16,
-        marginVertical: 12,
-        paddingHorizontal: 12,
-        height: 44,
+        backgroundColor: Colors.gray50,
+        borderRadius: 8,
+        marginHorizontal: 8,
+        marginVertical: 8,
+        paddingHorizontal: 10,
+        height: 36,
     },
     searchIcon: {
-        marginRight: 8,
+        marginRight: 6,
     },
     searchInput: {
         flex: 1,
-        fontSize: 16,
-        color: "#000",
+        fontSize: 15,
+        color: Colors.textPrimary,
         height: "100%",
+        paddingVertical: 0,
     },
-    searchHint: {
+    clearButton: {
+        padding: 4,
+    },
+    sectionHeader: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: Colors.gray50,
+    },
+    sectionTitle: {
         fontSize: 13,
-        color: "#8E8E93",
-        textAlign: "center",
-        marginBottom: 8,
+        color: Colors.textSecondary,
+        textTransform: "capitalize",
     },
     listContent: {
         flexGrow: 1,
+        paddingBottom: 20,
     },
     userItem: {
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: "#E5E5EA",
+        paddingVertical: 10,
+        backgroundColor: Colors.white,
     },
     avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         justifyContent: "center",
         alignItems: "center",
     },
     avatarText: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: "600",
-        color: "#fff",
+        color: Colors.white,
     },
     userInfo: {
         flex: 1,
@@ -310,21 +372,24 @@ const styles = StyleSheet.create({
     },
     userName: {
         fontSize: 16,
-        fontWeight: "600",
-        color: "#000",
-        marginBottom: 2,
+        fontWeight: "400",
+        color: Colors.textPrimary,
+        marginBottom: 4,
     },
     userEmail: {
         fontSize: 14,
-        color: "#8E8E93",
+        color: Colors.textSecondary,
     },
     onlineIndicator: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: "#4CAF50",
+        position: "absolute",
+        right: 0,
+        bottom: 0,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: Colors.online,
         borderWidth: 2,
-        borderColor: "#fff",
+        borderColor: Colors.white,
     },
     emptyContainer: {
         flex: 1,
@@ -334,39 +399,39 @@ const styles = StyleSheet.create({
         paddingTop: 60,
     },
     emptyTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "600",
-        color: "#000",
+        color: Colors.textPrimary,
         marginTop: 16,
         marginBottom: 8,
     },
     emptyText: {
-        fontSize: 15,
-        color: "#8E8E93",
+        fontSize: 14,
+        color: Colors.textSecondary,
         textAlign: "center",
-        lineHeight: 22,
+        lineHeight: 20,
     },
     loadingOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: Colors.blackOpacity,
         justifyContent: "center",
         alignItems: "center",
     },
     loadingBox: {
-        backgroundColor: "#fff",
+        backgroundColor: Colors.white,
         borderRadius: 16,
         padding: 24,
         alignItems: "center",
-        shadowColor: "#000",
+        shadowColor: Colors.black,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 8,
     },
     loadingText: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: "500",
-        color: "#000",
+        color: Colors.textPrimary,
         marginTop: 12,
     },
 });

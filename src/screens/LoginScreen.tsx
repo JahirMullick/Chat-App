@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -57,7 +57,8 @@ export default function LoginScreen() {
 
         try {
             // Firebase Email/Password Sign In
-            await auth().signInWithEmailAndPassword(email.trim(), password);
+            const auth = getAuth();
+            await auth.signInWithEmailAndPassword(email.trim(), password);
             console.log('Signed in with Email/Password!');
             setIsLoading(false);
             // Navigation is handled by AppNavigator based on auth state
@@ -118,10 +119,11 @@ export default function LoginScreen() {
             }
 
             // Create a Google credential with the token
+            const auth = getAuth();
             const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
             // Sign-in the user with the credential
-            await auth().signInWithCredential(googleCredential);
+            await auth.signInWithCredential(googleCredential);
 
             console.log('Signed in with Google!');
             setIsGoogleLoading(false);

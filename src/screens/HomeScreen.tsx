@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -169,6 +169,7 @@ function HomeScreen() {
                 avatarUrl: avatarUrl || undefined,
                 avatarColor: avatarColor,
                 category: chat.category,
+                recipientId: otherParticipantId,
             };
         });
     }, [firestoreChats, currentUserId]);
@@ -259,7 +260,8 @@ function HomeScreen() {
                 chatId: item.id,
                 name: item.name,
                 avatar: item.avatarUrl,
-                avatarColor: item.avatarColor
+                avatarColor: item.avatarColor,
+                recipientId: item.recipientId
             })}
         />
     );

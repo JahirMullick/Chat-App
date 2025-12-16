@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
@@ -64,7 +64,8 @@ export default function SignupScreen() {
 
         try {
             // Firebase Create User with Email and Password
-            const userCredential = await auth().createUserWithEmailAndPassword(
+            const auth = getAuth();
+            const userCredential = await auth.createUserWithEmailAndPassword(
                 email.trim(),
                 password
             );
@@ -83,7 +84,8 @@ export default function SignupScreen() {
 
             console.log('Account created successfully!');
             setIsLoading(false);
-            // Navigation is handled by AppNavigator based on auth state
+            // Navigate to CompleteProfile screen to collect additional information
+            navigation.navigate("CompleteProfile");
         } catch (error: any) {
             setIsLoading(false);
 

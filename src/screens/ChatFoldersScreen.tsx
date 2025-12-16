@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
@@ -42,7 +42,8 @@ const ChatFoldersScreen = () => {
     const [selectedChatIds, setSelectedChatIds] = useState<string[]>([]);
     const [availableChats, setAvailableChats] = useState<SelectableChat[]>([]);
 
-    const currentUser = auth().currentUser;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
     const { chats: firestoreChats } = useChats();
 
     // Popular folder emojis

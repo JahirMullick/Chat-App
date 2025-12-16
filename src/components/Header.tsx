@@ -18,6 +18,7 @@ interface HeaderProps {
     showBackButton?: boolean;
     onSearchPress?: () => void;
     onBackPress?: () => void;
+    rightActions?: React.ReactNode;
 }
 
 export default function Header({
@@ -27,6 +28,7 @@ export default function Header({
     showBackButton = false,
     onSearchPress,
     onBackPress,
+    rightActions,
 }: HeaderProps) {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<DrawerNavigationProp<any>>();
@@ -66,15 +68,19 @@ export default function Header({
                 <Text style={styles.title}>{title}</Text>
             </View>
 
-            {showSearch && (
-                <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={onSearchPress}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="search-outline" size={24} color={Colors.white} />
-                </TouchableOpacity>
-            )}
+            <View style={styles.rightSection}>
+                {rightActions || (
+                    showSearch && (
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={onSearchPress}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="search-outline" size={24} color={Colors.white} />
+                        </TouchableOpacity>
+                    )
+                )}
+            </View>
         </View>
     );
 }
@@ -100,5 +106,9 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: Colors.white,
         marginLeft: 8,
+    },
+    rightSection: {
+        flexDirection: "row",
+        alignItems: "center",
     },
 });

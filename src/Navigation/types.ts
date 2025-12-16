@@ -5,6 +5,7 @@ export type AuthStackParamList = {
     Login: undefined;
     Signup: undefined;
     ForgotPassword: undefined;
+    CompleteProfile: undefined;
 };
 
 // Main Stack Types
@@ -17,6 +18,18 @@ export type MainStackParamList = {
         avatar?: string;
         avatarColor?: string;
         isOnline?: boolean;
+    };
+    UserProfile: {
+        recipientId: string;
+        chatId?: string;
+        name: string;
+        avatar?: string;
+        avatarColor?: string;
+        phoneNumber?: string;
+        username?: string;
+    };
+    QrProfile: {
+        userId?: string;
     };
     NewChat: undefined;
     Test: undefined;

@@ -1,4 +1,4 @@
-import firestore from "@react-native-firebase/firestore";
+import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import {
     Chat,
     ChatCategory,
@@ -19,18 +19,18 @@ export const ChatService = {
     /**
      * Get reference to chats collection
      */
-    getCollection: () => firestore().collection(CHATS_COLLECTION),
+    getCollection: () => getFirestore().collection(CHATS_COLLECTION),
 
     /**
      * Get reference to a specific chat document
      */
-    getDocRef: (chatId: string) => firestore().collection(CHATS_COLLECTION).doc(chatId),
+    getDocRef: (chatId: string) => getFirestore().collection(CHATS_COLLECTION).doc(chatId),
 
     /**
      * Get reference to user's chats subcollection
      */
     getUserChatsCollection: (userId: string) =>
-        firestore().collection(USER_CHATS_COLLECTION).doc(userId).collection("chats"),
+        getFirestore().collection(USER_CHATS_COLLECTION).doc(userId).collection("chats"),
 
     /**
      * Create a new individual (1-on-1) chat
@@ -52,7 +52,7 @@ export const ChatService = {
                 UserService.getUserById(otherUserId),
             ]);
 
-            const now = firestore.FieldValue.serverTimestamp();
+            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
             const participants = [currentUserId, otherUserId].sort(); // Sort for consistency
 
             const participantDetails: { [userId: string]: ParticipantInfo } = {
@@ -81,7 +81,7 @@ export const ChatService = {
 
             // Create userChat entries for both users
             console.log(`Creating userChat entries for participants:`, participants);
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
             
             for (const userId of participants) {
                 const userChatRef = ChatService.getUserChatsCollection(userId).doc(chatRef.id);
@@ -137,7 +137,7 @@ export const ChatService = {
                 };
             });
 
-            const now = firestore.FieldValue.serverTimestamp();
+            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
 
             // Create chat document
             const chatRef = await ChatService.getCollection().add({
@@ -159,7 +159,7 @@ export const ChatService = {
             });
 
             // Create userChat entries for all members
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
             
             for (const userId of allMembers) {
                 const userChatRef = ChatService.getUserChatsCollection(userId).doc(chatRef.id);
@@ -322,8 +322,8 @@ export const ChatService = {
             await ChatService.getDocRef(chatId).update({
                 lastMessage: message,
                 lastMessageSenderId: senderId,
-                lastMessageTime: firestore.FieldValue.serverTimestamp(),
-                updatedAt: firestore.FieldValue.serverTimestamp(),
+                lastMessageTime: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                updatedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error updating last message:", error);
@@ -339,13 +339,13 @@ export const ChatService = {
             const chat = await ChatService.getChatById(chatId);
             if (!chat) return;
 
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
             
             for (const participantId of chat.participants) {
                 if (participantId !== senderId) {
                     const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
                     batch.update(userChatRef, {
-                        unreadCount: firestore.FieldValue.increment(1),
+                        unreadCount: FirebaseFirestoreTypes.FieldValue.increment(1),
                     });
                 }
             }
@@ -364,7 +364,7 @@ export const ChatService = {
         try {
             await ChatService.getUserChatsCollection(userId).doc(chatId).update({
                 unreadCount: 0,
-                lastReadAt: firestore.FieldValue.serverTimestamp(),
+                lastReadAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error marking chat as read:", error);
@@ -429,11 +429,11 @@ export const ChatService = {
                 throw new Error("User not found");
             }
 
-            const now = firestore.FieldValue.serverTimestamp();
+            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
 
             // Update chat document
             await ChatService.getDocRef(chatId).update({
-                participants: firestore.FieldValue.arrayUnion(newMemberId),
+                participants: FirebaseFirestoreTypes.FieldValue.arrayUnion(newMemberId),
                 [`participantDetails.${newMemberId}`]: {
                     displayName: newMember.displayName,
                     photoURL: newMember.photoURL,
@@ -465,12 +465,12 @@ export const ChatService = {
      */
     removeMemberFromGroup: async (chatId: string, memberId: string): Promise<void> => {
         try {
-            const now = firestore.FieldValue.serverTimestamp();
+            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
 
             // Update chat document
             await ChatService.getDocRef(chatId).update({
-                participants: firestore.FieldValue.arrayRemove(memberId),
-                [`participantDetails.${memberId}`]: firestore.FieldValue.delete(),
+                participants: FirebaseFirestoreTypes.FieldValue.arrayRemove(memberId),
+                [`participantDetails.${memberId}`]: FirebaseFirestoreTypes.FieldValue.delete(),
                 updatedAt: now,
             });
 
@@ -514,7 +514,7 @@ export const ChatService = {
             const chat = await ChatService.getChatById(chatId);
             if (!chat) return;
 
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
 
             // Delete userChat entries for all participants
             for (const participantId of chat.participants) {

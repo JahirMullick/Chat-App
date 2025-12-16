@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
@@ -33,7 +33,8 @@ type SettingsSection = {
 export default function SettingsScreen() {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
-    const currentUser = auth().currentUser;
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
     useEffect(() => {
@@ -189,7 +190,7 @@ export default function SettingsScreen() {
                 style: "destructive",
                 onPress: async () => {
                     try {
-                        await auth().signOut();
+                        await auth.signOut();
                     } catch (error) {
                         Alert.alert("Error", "Failed to logout");
                     }

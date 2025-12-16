@@ -1,9 +1,9 @@
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { NavigationContainerRef } from "@react-navigation/native";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./Navigation/AppNavigator";
@@ -23,8 +23,22 @@ export default function App() {
     const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
 
     useEffect(() => {
+        // Request notification permissions on app startup
+        const requestNotificationPermissions = async () => {
+            try {
+                await NotificationService.registerForPushNotificationsAsync();
+                console.log('✅ Notification permissions requested');
+            } catch (error) {
+                console.error('❌ Error requesting notification permissions:', error);
+            }
+        };
+
+        // Request permissions immediately on app launch
+        requestNotificationPermissions();
+
         // Register for push notifications when user logs in
-        const unsubscribe = auth().onAuthStateChanged(async (user) => {
+        const auth = getAuth();
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const token = await NotificationService.registerForPushNotificationsAsync();
                 if (token) {

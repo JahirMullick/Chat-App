@@ -1,4 +1,4 @@
-import firestore from "@react-native-firebase/firestore";
+import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { UserProfile } from "../../types/firestore.types";
 
 const USERS_COLLECTION = "users";
@@ -10,12 +10,12 @@ export const UserService = {
     /**
      * Get reference to users collection
      */
-    getCollection: () => firestore().collection(USERS_COLLECTION),
+    getCollection: () => getFirestore().collection(USERS_COLLECTION),
 
     /**
      * Get reference to a specific user document
      */
-    getDocRef: (userId: string) => firestore().collection(USERS_COLLECTION).doc(userId),
+    getDocRef: (userId: string) => getFirestore().collection(USERS_COLLECTION).doc(userId),
 
     /**
      * Create or update user profile in Firestore
@@ -33,7 +33,7 @@ export const UserService = {
             const userRef = UserService.getDocRef(uid);
             const userDoc = await userRef.get();
 
-            const now = firestore.FieldValue.serverTimestamp();
+            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
 
             if (userDoc.exists()) {
                 // Update existing user
@@ -120,8 +120,8 @@ export const UserService = {
         try {
             await UserService.getDocRef(userId).update({
                 isOnline,
-                lastSeen: firestore.FieldValue.serverTimestamp(),
-                updatedAt: firestore.FieldValue.serverTimestamp(),
+                lastSeen: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                updatedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error updating online status:", error);
@@ -134,12 +134,20 @@ export const UserService = {
      */
     updateProfile: async (
         userId: string,
-        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken">>
+        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "profileCompleted" | "gender" | "dateOfBirth">>
     ): Promise<void> => {
         try {
+            // Remove undefined values from updates
+            const cleanUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+                if (value !== undefined) {
+                    acc[key] = value;
+                }
+                return acc;
+            }, {} as Record<string, any>);
+
             await UserService.getDocRef(userId).update({
-                ...updates,
-                updatedAt: firestore.FieldValue.serverTimestamp(),
+                ...cleanUpdates,
+                updatedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error updating profile:", error);
