@@ -1,5 +1,5 @@
 // Firestore Services - Main Export
-import firestore from "@react-native-firebase/firestore";
+import { getFirestore } from "@react-native-firebase/firestore";
 
 export { ChatService } from "./chatService";
 export { MessageService } from "./messageService";
@@ -16,18 +16,19 @@ export * from "../../types/firestore.types";
  */
 export const testFirestoreConnection = async (): Promise<boolean> => {
     try {
+        const firestore = getFirestore();
         console.log("🔄 Testing Firestore connection...");
-        console.log("📱 Firebase App:", firestore().app.name);
+        console.log("📱 Firebase App:", firestore.app.name);
         
         // Try to access Firestore - this will fail if not connected
-        const testRef = firestore().collection("_connection_test");
+        const testRef = firestore.collection("_connection_test");
         
         // Attempt a simple read operation
         await testRef.limit(1).get();
         
         console.log("✅ Firestore connection successful!");
         console.log("📊 Firestore Settings:", {
-            app: firestore().app.name,
+            app: firestore.app.name,
         });
         
         return true;

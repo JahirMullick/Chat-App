@@ -31,14 +31,22 @@ export default function QrProfileScreen() {
 
     const { profile, loading } = useUserProfile(targetUserId || undefined);
 
-    // 🔑 DYNAMIC USER DATA
-    const userData = useMemo(() => ({
-        id: targetUserId || "unknown",
-        username: profile?.displayName?.replace(/\s/g, "").toUpperCase() || "USERNAME",
-        displayName: profile?.displayName || "User",
-        avatar: profile?.photoURL,
-        profileUrl: `https://myapp.com/u/${targetUserId || "unknown"}`,
-    }), [targetUserId, profile]);
+    // 🔑 DYNAMIC USER DATA - Store complete user info for QR code
+    const userData = useMemo(() => {
+        const userInfo = {
+            type: "user_profile",
+            userId: targetUserId || "unknown",
+            username: profile?.displayName?.replace(/\s/g, "").toUpperCase() || "USERNAME",
+            displayName: profile?.displayName || "User",
+            avatar: profile?.photoURL || null,
+            email: profile?.email || null,
+            phoneNumber: profile?.phoneNumber || null,
+        };
+        return {
+            ...userInfo,
+            qrData: JSON.stringify(userInfo), // Complete data for QR scanning
+        };
+    }, [targetUserId, profile]);
 
     const handleBackPress = useCallback(() => {
         navigation.goBack();
@@ -86,7 +94,7 @@ export default function QrProfileScreen() {
                         <View style={styles.qrWrapper}>
                             <View style={styles.qrCodeContainer}>
                                 <QRCode
-                                    value={userData.profileUrl}
+                                    value={userData.qrData}
                                     size={220}
                                     color={Colors.primary}
                                     backgroundColor={Colors.white}
@@ -97,7 +105,7 @@ export default function QrProfileScreen() {
 
                         {/* Username */}
                         <Text style={styles.username}>@{userData.username}</Text>
-                        <Text style={styles.userIdText}>{userData.id}</Text>
+                        {/* <Text style={styles.userIdText}>{userData.userId}</Text> */}
                     </View>
                 </View>
 

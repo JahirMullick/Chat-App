@@ -58,7 +58,8 @@ export const NotificationService = {
         console.error('Error getting push token:', error);
       }
     } else {
-      alert('Must use physical device for Push Notifications');
+      // alert('Must use physical device for Push Notifications');
+      console.log('Push notifications require a physical device');
     }
 
     return token;

@@ -1,4 +1,4 @@
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { NavigationContainerRef } from "@react-navigation/native";
 import Constants from "expo-constants";
@@ -37,7 +37,8 @@ export default function App() {
         requestNotificationPermissions();
 
         // Register for push notifications when user logs in
-        const unsubscribe = auth().onAuthStateChanged(async (user) => {
+        const auth = getAuth();
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const token = await NotificationService.registerForPushNotificationsAsync();
                 if (token) {

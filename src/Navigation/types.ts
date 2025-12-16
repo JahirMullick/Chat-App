@@ -5,6 +5,7 @@ export type AuthStackParamList = {
     Login: undefined;
     Signup: undefined;
     ForgotPassword: undefined;
+    CompleteProfile: undefined;
 };
 
 // Main Stack Types

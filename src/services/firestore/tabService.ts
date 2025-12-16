@@ -1,4 +1,4 @@
-import firestore from "@react-native-firebase/firestore";
+import { getFirestore } from "@react-native-firebase/firestore";
 import { ChatCategory, Tab } from "../../types/firestore.types";
 
 const TABS_COLLECTION = "tabs";
@@ -21,13 +21,13 @@ export const TabService = {
     /**
      * Get reference to global tabs collection
      */
-    getCollection: () => firestore().collection(TABS_COLLECTION),
+    getCollection: () => getFirestore().collection(TABS_COLLECTION),
 
     /**
      * Get reference to user's tabs collection
      */
     getUserTabsCollection: (userId: string) =>
-        firestore().collection(USER_TABS_COLLECTION).doc(userId).collection("tabs"),
+        getFirestore().collection(USER_TABS_COLLECTION).doc(userId).collection("tabs"),
 
     /**
      * Initialize default tabs for a user
@@ -43,7 +43,7 @@ export const TabService = {
                 return;
             }
 
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
             
             DEFAULT_TABS.forEach((tab) => {
                 const tabRef = userTabsRef.doc();
@@ -167,7 +167,7 @@ export const TabService = {
     setActiveTab: async (userId: string, tabId: string): Promise<void> => {
         try {
             const tabs = await TabService.getUserTabs(userId);
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
 
             tabs.forEach(tab => {
                 const tabRef = TabService.getUserTabsCollection(userId).doc(tab.id);
@@ -199,7 +199,7 @@ export const TabService = {
      */
     reorderTabs: async (userId: string, tabOrders: { tabId: string; order: number }[]): Promise<void> => {
         try {
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
 
             tabOrders.forEach(({ tabId, order }) => {
                 const tabRef = TabService.getUserTabsCollection(userId).doc(tabId);
@@ -224,7 +224,7 @@ export const TabService = {
     ): Promise<void> => {
         try {
             const tabs = await TabService.getUserTabs(userId);
-            const batch = firestore().batch();
+            const batch = getFirestore().batch();
 
             let totalCount = 0;
             Object.values(categoryCounts).forEach(count => {

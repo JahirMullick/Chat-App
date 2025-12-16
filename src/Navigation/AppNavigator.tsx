@@ -1,4 +1,4 @@
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { FirebaseAuthTypes, getAuth } from "@react-native-firebase/auth";
 import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { forwardRef, useEffect, useState } from "react";
@@ -15,6 +15,7 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
     const [showSplash, setShowSplash] = useState(true);
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+    const [profileCompleted, setProfileCompleted] = useState<boolean>(false);
 
     // Test Firestore connection on app start
     useEffect(() => {
@@ -38,14 +39,21 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
 
             // Sync user to Firestore
             try {
+                // Get existing user profile first
+                const existingProfile = await UserService.getUserById(user.uid);
+
+                // Only update basic auth fields, preserve existing photoURL from Firestore
                 await UserService.createOrUpdateUser(user.uid, {
                     email: user.email,
                     displayName: user.displayName,
-                    photoURL: user.photoURL,
+                    photoURL: existingProfile?.photoURL || user.photoURL, // Use Firestore photoURL if exists
                 });
 
                 // Initialize user tabs if needed
                 await TabService.initializeUserTabs(user.uid);
+
+                // Check if profile is completed
+                setProfileCompleted(existingProfile?.profileCompleted || false);
             } catch (error) {
                 console.error("Error syncing user to Firestore:", error);
             }
@@ -58,9 +66,29 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
     };
 
     useEffect(() => {
-        const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+        const auth = getAuth();
+        const subscriber = auth.onAuthStateChanged(onAuthStateChanged);
         return subscriber; // unsubscribe on unmount
     }, []);
+
+    // Listen to profile completion changes for the current user
+    useEffect(() => {
+        if (!user) return;
+
+        const unsubscribe = UserService.subscribeToUser(
+            user.uid,
+            (userProfile) => {
+                if (userProfile) {
+                    setProfileCompleted(userProfile.profileCompleted || false);
+                }
+            },
+            (error) => {
+                console.error("Error subscribing to user profile:", error);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [user]);
 
     // Handle splash screen finish
     const handleSplashFinish = () => {
@@ -81,7 +109,11 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
         <NavigationContainer ref={ref}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
-                    <Stack.Screen name="Main" component={MainStack} />
+                    profileCompleted ? (
+                        <Stack.Screen name="Main" component={MainStack} />
+                    ) : (
+                        <Stack.Screen name="Auth" component={AuthStack} />
+                    )
                 ) : (
                     <Stack.Screen name="Auth" component={AuthStack} />
                 )}

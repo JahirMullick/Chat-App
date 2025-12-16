@@ -1,4 +1,4 @@
-import auth from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import {
@@ -19,14 +19,15 @@ import {
  * Hook to get current user ID
  */
 export const useCurrentUserId = (): string | null => {
-    const [userId, setUserId] = useState<string | null>(auth().currentUser?.uid || null);
+    const auth = getAuth();
+    const [userId, setUserId] = useState<string | null>(auth.currentUser?.uid || null);
 
     useEffect(() => {
-        const unsubscribe = auth().onAuthStateChanged(user => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
             setUserId(user?.uid || null);
         });
         return unsubscribe;
-    }, []);
+    }, [auth]);
 
     return userId;
 };

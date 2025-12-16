@@ -14,6 +14,9 @@ export interface UserProfile {
     bio?: string;
     pushToken?: string;
     lastTokenUpdate?: FirebaseFirestoreTypes.Timestamp;
+    profileCompleted?: boolean;
+    gender?: string;
+    dateOfBirth?: string;
 }
 
 // Story types
