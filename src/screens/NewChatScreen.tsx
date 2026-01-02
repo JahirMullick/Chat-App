@@ -19,6 +19,7 @@ import Header from "../components/Header";
 import QrCodeScanner from "../components/QrCodeScanner";
 import Colors from "../constants/colors";
 import { MainStackParamList } from "../Navigation/types";
+import { ChatService } from "../services/firestore/chatService";
 import UserService from "../services/firestore/userService";
 import { UserProfile } from "../types/firestore.types";
 
@@ -107,12 +108,69 @@ export default function NewChatScreen() {
     };
 
     // Handle QR code scan
-    const handleQrCodeScanned = (data: string) => {
+    const handleQrCodeScanned = async (data: string) => {
         console.log("QR Code scanned:", data);
         setShowQrScanner(false);
-        // Here you can process the scanned data
-        // For example, if the QR code contains a user ID, you can fetch and navigate to that user
-        alert(`QR Code scanned: ${data}`);
+
+        if (!currentUser) {
+            alert("You must be logged in to start a chat");
+            return;
+        }
+
+        try {
+            // Parse QR code data
+            const parsedData = JSON.parse(data);
+
+            if (parsedData.type !== "user_profile" || !parsedData.userId) {
+                alert("Invalid QR code format");
+                return;
+            }
+
+            const scannedUserId = parsedData.userId;
+
+            // Check if scanning own QR code
+            if (scannedUserId === currentUser.uid) {
+                alert("You cannot scan your own QR code");
+                return;
+            }
+
+            // Fetch the scanned user's profile
+            const scannedUser = await UserService.getUserById(scannedUserId);
+
+            if (!scannedUser) {
+                alert("User not found");
+                return;
+            }
+
+            // Check if chat already exists
+            const existingChat = await ChatService.findIndividualChat(
+                currentUser.uid,
+                scannedUserId
+            );
+
+            if (existingChat) {
+                // Navigate to existing chat
+                navigation.replace("Chat", {
+                    chatId: existingChat.id,
+                    recipientId: scannedUserId,
+                    name: scannedUser.displayName || scannedUser.email || "Unknown",
+                    avatarColor: getRandomColor(scannedUserId),
+                    isOnline: scannedUser.isOnline,
+                });
+            } else {
+                // Navigate to new chat (will be created on first message)
+                navigation.replace("Chat", {
+                    chatId: undefined,
+                    recipientId: scannedUserId,
+                    name: scannedUser.displayName || scannedUser.email || "Unknown",
+                    avatarColor: getRandomColor(scannedUserId),
+                    isOnline: scannedUser.isOnline,
+                });
+            }
+        } catch (error) {
+            console.error("Error handling QR scan:", error);
+            alert("Failed to process QR code. Please try again.");
+        }
     };
 
     // Get initials from name or email

@@ -31,20 +31,18 @@ export default function QrProfileScreen() {
 
     const { profile, loading } = useUserProfile(targetUserId || undefined);
 
-    // 🔑 DYNAMIC USER DATA - Store complete user info for QR code
+    // 🔑 DYNAMIC USER DATA - Store only user ID for QR code
     const userData = useMemo(() => {
         const userInfo = {
             type: "user_profile",
             userId: targetUserId || "unknown",
+        };
+        return {
+            userId: targetUserId || "unknown",
             username: profile?.displayName?.replace(/\s/g, "").toUpperCase() || "USERNAME",
             displayName: profile?.displayName || "User",
             avatar: profile?.photoURL || null,
-            email: profile?.email || null,
-            phoneNumber: profile?.phoneNumber || null,
-        };
-        return {
-            ...userInfo,
-            qrData: JSON.stringify(userInfo), // Complete data for QR scanning
+            qrData: JSON.stringify(userInfo), // Only userId for QR scanning
         };
     }, [targetUserId, profile]);
 
