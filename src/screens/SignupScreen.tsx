@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
@@ -15,6 +16,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import AppleSignInButtonComponent from "../components/AppleSigninButton";
+import FacebookSignInButtonComponent from "../components/FacebookSigninButton";
+import GoogleSignInButtonComponent from "../components/GoogleSigninButton";
 import { AuthStackParamList } from "../Navigation/types";
 import { UserService } from "../services/firestore";
 
@@ -29,6 +33,9 @@ export default function SignupScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [isAppleLoading, setIsAppleLoading] = useState(false);
+    const [isFacebookLoading, setIsFacebookLoading] = useState(false);
     const [agreeToTerms, setAgreeToTerms] = useState(false);
 
     const handleSignup = async () => {
@@ -114,6 +121,56 @@ export default function SignupScreen() {
 
             console.error('Signup Error:', error);
             Alert.alert("Signup Failed", errorMessage);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setIsGoogleLoading(true);
+        try {
+            await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+            const signInResult = await GoogleSignin.signIn();
+            let idToken = signInResult.data?.idToken;
+            if (!idToken) {
+                idToken = (signInResult as any).idToken;
+            }
+            if (!idToken) {
+                throw new Error('No ID token found');
+            }
+            const auth = getAuth();
+            const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+            await auth.signInWithCredential(googleCredential);
+            console.log('Signed in with Google!');
+            setIsGoogleLoading(false);
+        } catch (error: any) {
+            setIsGoogleLoading(false);
+            console.error('Google Sign-In Error:', error);
+            Alert.alert("Error", error.message || "Google Sign-In failed. Please try again.");
+        }
+    };
+
+    const handleAppleSignIn = async () => {
+        setIsAppleLoading(true);
+        try {
+            // Add your Apple Sign-In logic here
+            setTimeout(() => {
+                setIsAppleLoading(false);
+            }, 1500);
+        } catch (error) {
+            setIsAppleLoading(false);
+            Alert.alert("Error", "Apple Sign-In failed. Please try again.");
+        }
+    };
+
+    const handleFacebookSignIn = async () => {
+        setIsFacebookLoading(true);
+        try {
+            // Add your Facebook Sign-In logic here
+            setTimeout(() => {
+                setIsFacebookLoading(false);
+            }, 1500);
+        } catch (error) {
+            setIsFacebookLoading(false);
+            Alert.alert("Error", "Facebook Sign-In failed. Please try again.");
         }
     };
 
@@ -236,18 +293,21 @@ export default function SignupScreen() {
                             <View style={styles.dividerLine} />
                         </View>
 
-                        {/* Social Signup */}
-                        <View style={styles.socialContainer}>
-                            <TouchableOpacity style={styles.socialButton}>
-                                <Ionicons name="logo-google" size={24} color="#DB4437" />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.socialButton}>
-                                <Ionicons name="logo-apple" size={24} color="#000" />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.socialButton}>
-                                <Ionicons name="logo-facebook" size={24} color="#4267B2" />
-                            </TouchableOpacity>
-                        </View>
+                        {/* Social Sign In Buttons */}
+                        <GoogleSignInButtonComponent
+                            onPress={handleGoogleSignIn}
+                            disabled={isGoogleLoading}
+                        />
+
+                        <AppleSignInButtonComponent
+                            onPress={handleAppleSignIn}
+                            disabled={isAppleLoading}
+                        />
+
+                        <FacebookSignInButtonComponent
+                            onPress={handleFacebookSignIn}
+                            disabled={isFacebookLoading}
+                        />
                     </View>
 
                     {/* Footer */}
@@ -367,19 +427,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         color: "#999",
         fontSize: 14,
-    },
-    socialContainer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 16,
-    },
-    socialButton: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: "#f5f5f5",
-        justifyContent: "center",
-        alignItems: "center",
     },
     footer: {
         flexDirection: "row",

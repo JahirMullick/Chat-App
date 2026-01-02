@@ -12,7 +12,7 @@ export default {
         newArchEnabled: true,
         ios: {
             supportsTablet: true,
-            // googleServicesFile: "./GoogleService-Info.plist", // Uncomment when you have iOS Firebase config
+            googleServicesFile: "./GoogleService-Info.plist", // Uncomment when you have iOS Firebase config
             bundleIdentifier: "com.anonymous.testchat",
         },
         android: {
@@ -69,6 +69,7 @@ export default {
                 },
             ],
             ["@react-native-google-signin/google-signin"],
+            "@react-native-community/datetimepicker",
         ],
         experiments: {
             reactCompiler: true,

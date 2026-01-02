@@ -71,7 +71,7 @@ export default function SettingsScreen() {
                 {
                     icon: "call-outline",
                     label: userProfile?.phoneNumber || "~Not Added",
-                    value: "Tap to change phone number",
+                    value: "Phone number",
                     onPress: () => console.log("Change phone"),
                 },
                 {
@@ -210,7 +210,10 @@ export default function SettingsScreen() {
                     <Ionicons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity style={styles.headerIcon}>
+                    <TouchableOpacity
+                        style={styles.headerIcon}
+                        onPress={() => navigation.navigate("QrProfile" as never)}
+                    >
                         <Ionicons name="qr-code-outline" size={22} color="#fff" />
                     </TouchableOpacity>
                     {/* <TouchableOpacity style={styles.headerIcon}>

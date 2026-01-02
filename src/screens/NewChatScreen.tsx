@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    Modal,
     StatusBar,
     StyleSheet,
     Text,
@@ -15,6 +16,7 @@ import {
     View,
 } from "react-native";
 import Header from "../components/Header";
+import QrCodeScanner from "../components/QrCodeScanner";
 import Colors from "../constants/colors";
 import { MainStackParamList } from "../Navigation/types";
 import UserService from "../services/firestore/userService";
@@ -30,6 +32,7 @@ export default function NewChatScreen() {
     const [hasSearched, setHasSearched] = useState(false);
     const [isCreatingChat, setIsCreatingChat] = useState(false);
     const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+    const [showQrScanner, setShowQrScanner] = useState(false);
 
     const auth = getAuth();
     const currentUser = auth.currentUser;
@@ -101,6 +104,15 @@ export default function NewChatScreen() {
         ];
         const index = uid.charCodeAt(0) % colors.length;
         return colors[index];
+    };
+
+    // Handle QR code scan
+    const handleQrCodeScanned = (data: string) => {
+        console.log("QR Code scanned:", data);
+        setShowQrScanner(false);
+        // Here you can process the scanned data
+        // For example, if the QR code contains a user ID, you can fetch and navigate to that user
+        alert(`QR Code scanned: ${data}`);
     };
 
     // Get initials from name or email
@@ -230,7 +242,10 @@ export default function NewChatScreen() {
                     <Text style={styles.quickActionText}>New Group</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.quickActionItem}>
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => setShowQrScanner(true)}
+                >
                     <View style={styles.quickActionIcon}>
                         <MaterialCommunityIcons name="qrcode-scan" size={24} color={Colors.primary} />
                     </View>
@@ -272,6 +287,23 @@ export default function NewChatScreen() {
                     </View>
                 </View>
             )}
+
+            {/* QR Code Scanner Modal */}
+            <Modal
+                visible={showQrScanner}
+                animationType="slide"
+                onRequestClose={() => setShowQrScanner(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <TouchableOpacity
+                        onPress={() => setShowQrScanner(false)}
+                        style={styles.closeButtonAbsolute}
+                    >
+                        <Ionicons name="arrow-back" size={28} color={Colors.white} />
+                    </TouchableOpacity>
+                    <QrCodeScanner onScanned={handleQrCodeScanned} />
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -433,5 +465,18 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         color: Colors.textPrimary,
         marginTop: 12,
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: Colors.black,
+    },
+    closeButtonAbsolute: {
+        position: 'absolute',
+        top: 40,
+        left: 16,
+        zIndex: 10,
+        padding: 8,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: 20,
     },
 });
