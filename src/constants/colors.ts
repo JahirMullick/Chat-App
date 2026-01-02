@@ -71,7 +71,7 @@ export const Colors = {
   shadowDark: "rgba(0,0,0,0.3)",
   shadowLight: "rgba(0,0,0,0.1)",
   whiteOpacity: "rgba(255,255,255,0.8)",
-  blackOpacity: "rgba(0,0,0,0.5)",
+  // blackOpacity: "rgba(0,0,0,0.5)",
   
   // Additional Grays
   gray50: "#F4F4F4",
