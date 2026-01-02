@@ -22,6 +22,7 @@ export const Colors = {
   backgroundDark: "#E6F4FE",
   black: "#000",
   blackOverlay: "#000000",
+  darkOverlay: "rgba(43, 40, 40, 0.6)",
   
   // Message Bubble Colors
   messageBubbleMe: "#DCF8C6",
@@ -90,6 +91,8 @@ export const Colors = {
   // Special Colors
   transparent: "transparent",
   callPrimary: "#1B93FF",
+
+
 };
 
 export default Colors;
