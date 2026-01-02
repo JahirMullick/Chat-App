@@ -1,4 +1,4 @@
-import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { Story, StoryGroup } from "../../types/firestore.types";
 import { UserService } from "./userService";
 
@@ -218,7 +218,7 @@ export const StoryService = {
     markStoryAsViewed: async (storyId: string, viewerId: string): Promise<void> => {
         try {
             await StoryService.getDocRef(storyId).update({
-                viewers: FirebaseFirestoreTypes.FieldValue.arrayUnion(viewerId),
+                viewers: firestore.FieldValue.arrayUnion(viewerId),
             });
         } catch (error) {
             console.error("Error marking story as viewed:", error);

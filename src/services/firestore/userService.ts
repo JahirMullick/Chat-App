@@ -1,4 +1,4 @@
-import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { UserProfile } from "../../types/firestore.types";
 
 const USERS_COLLECTION = "users";
@@ -33,7 +33,7 @@ export const UserService = {
             const userRef = UserService.getDocRef(uid);
             const userDoc = await userRef.get();
 
-            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
+            const now = firestore.FieldValue.serverTimestamp();
 
             if (userDoc.exists()) {
                 // Update existing user
@@ -120,8 +120,8 @@ export const UserService = {
         try {
             await UserService.getDocRef(userId).update({
                 isOnline,
-                lastSeen: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
-                updatedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                lastSeen: firestore.FieldValue.serverTimestamp(),
+                updatedAt: firestore.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error updating online status:", error);
@@ -147,7 +147,7 @@ export const UserService = {
 
             await UserService.getDocRef(userId).update({
                 ...cleanUpdates,
-                updatedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                updatedAt: firestore.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error updating profile:", error);

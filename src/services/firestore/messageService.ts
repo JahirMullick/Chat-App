@@ -1,4 +1,4 @@
-import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import { Message, MessageStatus } from "../../types/firestore.types";
 import NotificationService from "../notificationService";
 import { ChatService } from "./chatService";
@@ -50,7 +50,7 @@ export const MessageService = {
         }
     ): Promise<string> => {
         try {
-            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
+            const now = firestore.FieldValue.serverTimestamp();
 
             const messageData: Omit<Message, "id"> = {
                 chatId,
@@ -178,7 +178,7 @@ export const MessageService = {
     ): Promise<void> => {
         try {
             await MessageService.getDocRef(chatId, messageId).update({
-                readBy: FirebaseFirestoreTypes.FieldValue.arrayUnion(userId),
+                readBy: firestore.FieldValue.arrayUnion(userId),
             });
         } catch (error) {
             console.error("Error marking message as read:", error);
@@ -207,7 +207,7 @@ export const MessageService = {
                 const message = doc.data();
                 if (!message.readBy?.includes(userId)) {
                     batch.update(doc.ref, {
-                        readBy: FirebaseFirestoreTypes.FieldValue.arrayUnion(userId),
+                        readBy: firestore.FieldValue.arrayUnion(userId),
                     });
                 }
             });
@@ -252,7 +252,7 @@ export const MessageService = {
             await MessageService.getDocRef(chatId, messageId).update({
                 text: newText,
                 isEdited: true,
-                editedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                editedAt: firestore.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error editing message:", error);
@@ -279,7 +279,7 @@ export const MessageService = {
     deleteMessageForMe: async (chatId: string, messageId: string, userId: string): Promise<void> => {
         try {
             await MessageService.getDocRef(chatId, messageId).update({
-                deletedFor: FirebaseFirestoreTypes.FieldValue.arrayUnion(userId),
+                deletedFor: firestore.FieldValue.arrayUnion(userId),
             });
             console.log("Message deleted for user:", userId);
         } catch (error) {

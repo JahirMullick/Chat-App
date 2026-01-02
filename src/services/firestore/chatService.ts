@@ -1,4 +1,4 @@
-import { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
 import {
     Chat,
     ChatCategory,
@@ -52,7 +52,7 @@ export const ChatService = {
                 UserService.getUserById(otherUserId),
             ]);
 
-            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
+            const now = firestore.FieldValue.serverTimestamp();
             const participants = [currentUserId, otherUserId].sort(); // Sort for consistency
 
             const participantDetails: { [userId: string]: ParticipantInfo } = {
@@ -137,7 +137,7 @@ export const ChatService = {
                 };
             });
 
-            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
+            const now = firestore.FieldValue.serverTimestamp();
 
             // Create chat document
             const chatRef = await ChatService.getCollection().add({
@@ -322,8 +322,8 @@ export const ChatService = {
             await ChatService.getDocRef(chatId).update({
                 lastMessage: message,
                 lastMessageSenderId: senderId,
-                lastMessageTime: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
-                updatedAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                lastMessageTime: firestore.FieldValue.serverTimestamp(),
+                updatedAt: firestore.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error updating last message:", error);
@@ -345,7 +345,7 @@ export const ChatService = {
                 if (participantId !== senderId) {
                     const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
                     batch.update(userChatRef, {
-                        unreadCount: FirebaseFirestoreTypes.FieldValue.increment(1),
+                        unreadCount: firestore.FieldValue.increment(1),
                     });
                 }
             }
@@ -364,7 +364,7 @@ export const ChatService = {
         try {
             await ChatService.getUserChatsCollection(userId).doc(chatId).update({
                 unreadCount: 0,
-                lastReadAt: FirebaseFirestoreTypes.FieldValue.serverTimestamp(),
+                lastReadAt: firestore.FieldValue.serverTimestamp(),
             });
         } catch (error) {
             console.error("Error marking chat as read:", error);
@@ -429,11 +429,11 @@ export const ChatService = {
                 throw new Error("User not found");
             }
 
-            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
+            const now = firestore.FieldValue.serverTimestamp();
 
             // Update chat document
             await ChatService.getDocRef(chatId).update({
-                participants: FirebaseFirestoreTypes.FieldValue.arrayUnion(newMemberId),
+                participants: firestore.FieldValue.arrayUnion(newMemberId),
                 [`participantDetails.${newMemberId}`]: {
                     displayName: newMember.displayName,
                     photoURL: newMember.photoURL,
@@ -465,12 +465,12 @@ export const ChatService = {
      */
     removeMemberFromGroup: async (chatId: string, memberId: string): Promise<void> => {
         try {
-            const now = FirebaseFirestoreTypes.FieldValue.serverTimestamp();
+            const now = firestore.FieldValue.serverTimestamp();
 
             // Update chat document
             await ChatService.getDocRef(chatId).update({
-                participants: FirebaseFirestoreTypes.FieldValue.arrayRemove(memberId),
-                [`participantDetails.${memberId}`]: FirebaseFirestoreTypes.FieldValue.delete(),
+                participants: firestore.FieldValue.arrayRemove(memberId),
+                [`participantDetails.${memberId}`]: firestore.FieldValue.delete(),
                 updatedAt: now,
             });
 
