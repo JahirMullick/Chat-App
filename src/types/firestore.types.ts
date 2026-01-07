@@ -81,6 +81,7 @@ export interface Message {
     senderId: string;
     senderName: string;
     senderPhotoURL?: string | null;
+    receiverId?: string | null;
     text: string;
     timestamp: FirebaseFirestoreTypes.Timestamp;
     status: MessageStatus;

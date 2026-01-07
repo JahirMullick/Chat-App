@@ -217,6 +217,7 @@ function ChatScreen() {
             // Send the message - use MessageService directly with the new chatId
             if (chatIdToUse) {
                 const userProfile = await UserService.getUserById(currentUserId);
+                // ✅ UPDATED: Now passing receiverId
                 await MessageService.sendMessage(
                     chatIdToUse,
                     currentUserId,
@@ -224,6 +225,7 @@ function ChatScreen() {
                     messageText.trim(),
                     {
                         senderPhotoURL: userProfile?.photoURL || null,
+                        receiverId: recipientId, // ✅ ADD THIS LINE
                     }
                 );
             }
