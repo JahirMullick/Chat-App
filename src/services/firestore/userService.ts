@@ -1,4 +1,4 @@
-import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore, { getFirestore } from "@react-native-firebase/firestore";
 import { UserProfile } from "../../types/firestore.types";
 
 const USERS_COLLECTION = "users";
@@ -134,7 +134,7 @@ export const UserService = {
      */
     updateProfile: async (
         userId: string,
-        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "profileCompleted" | "gender" | "dateOfBirth">>
+        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "fcmToken" | "lastTokenUpdate" | "profileCompleted" | "gender" | "dateOfBirth">>
     ): Promise<void> => {
         try {
             // Remove undefined values from updates

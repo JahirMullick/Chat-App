@@ -41,6 +41,7 @@ export const MessageService = {
             mediaUrl?: string;
             mediaType?: "image" | "video" | "audio" | "document";
             mediaThumbnail?: string;
+            senderPhotoURL?: string | null;
             replyTo?: {
                 messageId: string;
                 text: string;
@@ -56,6 +57,7 @@ export const MessageService = {
                 chatId,
                 senderId,
                 senderName,
+                senderPhotoURL: options?.senderPhotoURL || null,
                 text,
                 timestamp: now as any,
                 status: "sent",

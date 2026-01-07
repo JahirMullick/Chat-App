@@ -13,6 +13,7 @@ export interface UserProfile {
     phoneNumber?: string | null;
     bio?: string;
     pushToken?: string;
+    fcmToken?: string;
     lastTokenUpdate?: FirebaseFirestoreTypes.Timestamp;
     profileCompleted?: boolean;
     gender?: string;
@@ -79,6 +80,7 @@ export interface Message {
     chatId: string;
     senderId: string;
     senderName: string;
+    senderPhotoURL?: string | null;
     text: string;
     timestamp: FirebaseFirestoreTypes.Timestamp;
     status: MessageStatus;

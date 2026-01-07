@@ -1,4 +1,5 @@
-import * as Device from 'expo-device';
+import firestore from '@react-native-firebase/firestore';
+import { AuthorizationStatus, getInitialNotification, getMessaging, getToken, onMessage, onNotificationOpenedApp, onTokenRefresh, requestPermission, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { UserService } from './firestore';
@@ -16,141 +17,179 @@ Notifications.setNotificationHandler({
 
 export const NotificationService = {
   /**
-   * Register for push notifications and get expo push token
+   * Request notification permissions for iOS and Android
    */
-  registerForPushNotificationsAsync: async (): Promise<string | null> => {
-    let token: string | null = null;
+  requestUserPermission: async (): Promise<boolean> => {
+    if (Platform.OS === 'ios') {
+      const messaging = getMessaging();
+      const authStatus = await requestPermission(messaging);
+      const enabled =
+        authStatus === AuthorizationStatus.AUTHORIZED ||
+        authStatus === AuthorizationStatus.PROVISIONAL;
 
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C', // Keep as is - this is a notification system color
-      });
-    }
+      if (enabled) {
+        console.log('✅ iOS notification permission granted:', authStatus);
+      } else {
+        console.log('⚠️ iOS notification permission denied');
+      }
+      return enabled;
+    } else {
+      // Android 13+ requires permission
 
-    if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       
-      console.log('📱 Current notification permission status:', existingStatus);
-      
       if (existingStatus !== 'granted') {
-        console.log('🔔 Requesting notification permissions...');
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
-        console.log('📱 New notification permission status:', finalStatus);
       }
       
-      if (finalStatus !== 'granted') {
+      const granted = finalStatus === 'granted';
+      console.log(granted ? '✅ Android notification permission granted' : '⚠️ Android notification permission denied');
+      return granted;
+    }
+  },
+
+  /**
+   * Get FCM token and save to Firestore
+   */
+  registerDeviceForNotifications: async (userId: string): Promise<string | null> => {
+    try {
+      // Request permission first
+      const hasPermission = await NotificationService.requestUserPermission();
+      if (!hasPermission) {
         console.warn('⚠️ Notification permission not granted');
         return null;
       }
-      
-      try {
-        const tokenData = await Notifications.getExpoPushTokenAsync({
-          projectId: '8a9b4461-d8c8-46db-8fee-d8b7d21ce494', // Get from app.json expo.extra.eas.projectId
+
+      // Create multiple notification channels for Android with high priority
+      if (Platform.OS === 'android') {
+        // Default channel for general notifications
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'Default Notifications',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+          sound: 'default',
+          enableVibrate: true,
+          showBadge: true,
+          enableLights: true,
         });
-        token = tokenData.data;
-        console.log('📱 Expo Push Token:', token);
-      } catch (error) {
-        console.error('Error getting push token:', error);
+
+        // High priority channel for chat messages
+        await Notifications.setNotificationChannelAsync('fcm_default_channel', {
+          name: 'Chat Notifications',
+          description: 'Notifications for new chat messages',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+          sound: 'default',
+          enableVibrate: true,
+          showBadge: true,
+          enableLights: true,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
+
+        console.log('✅ Android notification channels created');
       }
-    } else {
-      // alert('Must use physical device for Push Notifications');
-      console.log('Push notifications require a physical device');
-    }
 
-    return token;
-  },
+      // Get FCM token
+      const messaging = getMessaging();
+      const fcmToken = await getToken(messaging);
+      console.log('📱 FCM Token:', fcmToken);
 
-  /**
-   * Save push token to user's Firestore document
-   */
-  saveUserPushToken: async (userId: string, token: string): Promise<void> => {
-    try {
-      await UserService.updateProfile(userId, {
-        pushToken: token,
-      });
-      console.log('✅ Push token saved to Firestore');
+      // Save token to Firestore
+      if (fcmToken && userId) {
+        await UserService.updateProfile(userId, {
+          fcmToken,
+          lastTokenUpdate: firestore.Timestamp.now(),
+        });
+        console.log('✅ FCM token saved to Firestore');
+      }
+
+      return fcmToken;
     } catch (error) {
-      console.error('Error saving push token:', error);
+      console.error('❌ Error registering device for notifications:', error);
+      return null;
     }
   },
 
   /**
-   * Send a push notification to specific user(s)
+   * Listen for token refresh
    */
-  sendPushNotification: async (
-    expoPushToken: string,
-    title: string,
-    body: string,
-    data?: any
-  ): Promise<void> => {
-    const message = {
-      to: expoPushToken,
-      sound: 'default',
-      title,
-      body,
-      data,
-      priority: 'high' as const,
-    };
-
-    try {
-      await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message),
-      });
-      console.log('✅ Push notification sent');
-    } catch (error) {
-      console.error('Error sending push notification:', error);
-    }
+  onTokenRefresh: (userId: string) => {
+    const messaging = getMessaging();
+    return onTokenRefresh(messaging, async (fcmToken) => {
+      console.log('🔄 FCM Token refreshed:', fcmToken);
+      if (userId) {
+        await UserService.updateProfile(userId, {
+          fcmToken,
+          lastTokenUpdate: firestore.Timestamp.now(),
+        });
+      }
+    });
   },
 
   /**
-   * Send notification to all chat participants except sender
+   * Handle foreground messages
    */
-  sendChatNotification: async (
-    chatId: string,
-    senderId: string,
-    senderName: string,
-    messageText: string,
-    participantIds: string[]
-  ): Promise<void> => {
-    try {
-      // Get push tokens for all participants except sender
-      const recipientIds = participantIds.filter(id => id !== senderId);
+  onMessageReceived: (callback: (message: any) => void) => {
+    const messaging = getMessaging();
+    return onMessage(messaging, async (remoteMessage) => {
+      console.log('📬 Foreground notification received:', remoteMessage);
       
-      const notifications = recipientIds.map(async (recipientId) => {
-        try {
-          const recipient = await UserService.getUserById(recipientId);
-          if (recipient?.pushToken) {
-            await NotificationService.sendPushNotification(
-              recipient.pushToken,
-              senderName,
-              messageText,
-              {
-                type: 'chat_message',
-                chatId,
-                senderId,
-              }
-            );
-          }
-        } catch (err) {
-          console.error(`Error sending notification to ${recipientId}:`, err);
-        }
-      });
+      // Display local notification when app is in foreground
+      if (remoteMessage.notification) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: remoteMessage.notification.title || 'New Message',
+            body: remoteMessage.notification.body || '',
+            data: remoteMessage.data,
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority.MAX,
+            vibrate: [0, 250, 250, 250],
+          },
+          trigger: null, // Show immediately
+        });
+      }
+      
+      callback(remoteMessage);
+    });
+  },
 
-      await Promise.all(notifications);
-    } catch (error) {
-      console.error('Error sending chat notifications:', error);
+  /**
+   * Handle notification when app is opened from background/killed state
+   */
+  getInitialNotification: async () => {
+    const messaging = getMessaging();
+    const remoteMessage = await getInitialNotification(messaging);
+    if (remoteMessage) {
+      console.log('📱 App opened from notification:', remoteMessage);
+      return remoteMessage;
     }
+    return null;
+  },
+
+  /**
+   * Handle notification tap when app is in background
+   */
+  onNotificationOpenedApp: (callback: (message: any) => void) => {
+    const messaging = getMessaging();
+    return onNotificationOpenedApp(messaging, (remoteMessage) => {
+      console.log('📱 Notification opened app from background:', remoteMessage);
+      callback(remoteMessage);
+    });
+  },
+
+  /**
+   * Set background message handler (must be called outside of component)
+   */
+  setBackgroundMessageHandler: () => {
+    const messaging = getMessaging();
+    setBackgroundMessageHandler(messaging, async (remoteMessage) => {
+      console.log('📬 Background notification received:', remoteMessage);
+      // Handle background notification here if needed
+    });
   },
 
   /**

@@ -52,7 +52,6 @@ export default {
                 "expo-notifications",
                 {
                     icon: "./assets/images/notification-icon.png",
-                    color: "#ffffff",
                     sounds: ["./assets/sounds/notification.wav"],
                     mode: "production",
                 },

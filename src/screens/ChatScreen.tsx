@@ -40,6 +40,7 @@ interface DisplayMessage {
     timestamp: any;
     isMe: boolean;
     senderId: string;
+    senderPhotoURL?: string | null;
     isRead?: boolean;
     isEdited?: boolean;
     imageUri?: string;
@@ -138,6 +139,7 @@ function ChatScreen() {
                 timestamp: msg.timestamp,
                 isMe: msg.senderId === currentUserId,
                 senderId: msg.senderId,
+                senderPhotoURL: msg.senderPhotoURL,
                 isRead: readByOthers, // True only if read by recipient(s)
                 isEdited: msg.isEdited,
                 imageUri: msg.mediaType === "image" ? msg.mediaUrl : undefined,
@@ -219,7 +221,10 @@ function ChatScreen() {
                     chatIdToUse,
                     currentUserId,
                     userProfile?.displayName || "Unknown",
-                    messageText.trim()
+                    messageText.trim(),
+                    {
+                        senderPhotoURL: userProfile?.photoURL || null,
+                    }
                 );
             }
         } catch (error) {
