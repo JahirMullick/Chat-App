@@ -293,7 +293,9 @@ export default function NewChatScreen() {
 
             {/* Quick Actions */}
             <View style={styles.quickActions}>
-                <TouchableOpacity style={styles.quickActionItem}>
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => navigation.navigate('NewGroup')}>
                     <View style={styles.quickActionIcon}>
                         <Ionicons name="people" size={24} color={Colors.primary} />
                     </View>
@@ -310,7 +312,9 @@ export default function NewChatScreen() {
                     <Text style={styles.quickActionText}>New Contact</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.quickActionItem}>
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => console.log("Button Pressed")}>
                     <View style={styles.quickActionIcon}>
                         <MaterialCommunityIcons name="bullhorn" size={24} color={Colors.primary} />
                     </View>

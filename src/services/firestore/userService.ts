@@ -1,4 +1,4 @@
-import firestore, { getFirestore } from "@react-native-firebase/firestore";
+import firestore from "@react-native-firebase/firestore";
 import { UserProfile } from "../../types/firestore.types";
 
 const USERS_COLLECTION = "users";
@@ -10,12 +10,12 @@ export const UserService = {
     /**
      * Get reference to users collection
      */
-    getCollection: () => getFirestore().collection(USERS_COLLECTION),
+    getCollection: () => firestore().collection(USERS_COLLECTION),
 
     /**
      * Get reference to a specific user document
      */
-    getDocRef: (userId: string) => getFirestore().collection(USERS_COLLECTION).doc(userId),
+    getDocRef: (userId: string) => firestore().collection(USERS_COLLECTION).doc(userId),
 
     /**
      * Create or update user profile in Firestore
@@ -176,6 +176,30 @@ export const UserService = {
                 onError?.(error);
             }
         );
+    },
+
+    /**
+     * Subscribe to all users (real-time)
+     */
+    subscribeToAllUsers: (
+        onUpdate: (users: UserProfile[]) => void,
+        onError?: (error: Error) => void
+    ) => {
+        return UserService.getCollection()
+            .orderBy("displayName", "asc")
+            .onSnapshot(
+                (snapshot) => {
+                    const users = snapshot.docs.map(doc => ({
+                        uid: doc.id,
+                        ...doc.data(),
+                    } as UserProfile));
+                    onUpdate(users);
+                },
+                (error) => {
+                    console.error("Error in all users subscription:", error);
+                    onError?.(error);
+                }
+            );
     },
 
     /**

@@ -1,4 +1,4 @@
-import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
 import { Message, MessageStatus } from "../../types/firestore.types";
 import { ChatService } from "./chatService";
 
@@ -13,7 +13,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //      * Get reference to messages subcollection for a chat
 //      */
 //     getCollection: (chatId: string) =>
-//         getFirestore()
+//         firestore()
 //             .collection(CHATS_COLLECTION)
 //             .doc(chatId)
 //             .collection(MESSAGES_SUBCOLLECTION),
@@ -22,7 +22,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //      * Get reference to a specific message document
 //      */
 //     getDocRef: (chatId: string, messageId: string) =>
-//         getFirestore()
+//         firestore()
 //             .collection(CHATS_COLLECTION)
 //             .doc(chatId)
 //             .collection(MESSAGES_SUBCOLLECTION)
@@ -88,7 +88,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 
 //             // Send push notification to other participants
 //             try {
-//                 const chatDoc = await getFirestore().collection(CHATS_COLLECTION).doc(chatId).get();
+//                 const chatDoc = await firestore().collection(CHATS_COLLECTION).doc(chatId).get();
 //                 const chatData = chatDoc.data();
                 
 //                 if (chatData?.participants) {
@@ -203,7 +203,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 
 //             if (snapshot.empty) return;
 
-//             const batch = getFirestore().batch();
+//             const batch = firestore().batch();
             
 //             snapshot.docs.forEach(doc => {
 //                 const message = doc.data();
@@ -302,7 +302,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //             // Delete in batches of 500 (Firestore limit)
 //             const batchSize = 500;
 //             const batches: FirebaseFirestoreTypes.WriteBatch[] = [];
-//             let currentBatch = getFirestore().batch();
+//             let currentBatch = firestore().batch();
 //             let operationCount = 0;
 
 //             snapshot.docs.forEach(doc => {
@@ -311,7 +311,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 
 //                 if (operationCount >= batchSize) {
 //                     batches.push(currentBatch);
-//                     currentBatch = getFirestore().batch();
+//                     currentBatch = firestore().batch();
 //                     operationCount = 0;
 //                 }
 //             });
@@ -379,7 +379,7 @@ export const MessageService = {
      * Get reference to messages subcollection for a chat
      */
     getCollection: (chatId: string) =>
-        getFirestore()
+        firestore()
             .collection(CHATS_COLLECTION)
             .doc(chatId)
             .collection(MESSAGES_SUBCOLLECTION),
@@ -388,7 +388,7 @@ export const MessageService = {
      * Get reference to a specific message document
      */
     getDocRef: (chatId: string, messageId: string) =>
-        getFirestore()
+        firestore()
             .collection(CHATS_COLLECTION)
             .doc(chatId)
             .collection(MESSAGES_SUBCOLLECTION)
@@ -424,7 +424,7 @@ export const MessageService = {
 
             if (!receiverId) {
                 // Fetch receiverId from chat participants if not provided
-                const chatDoc = await getFirestore()
+                const chatDoc = await firestore()
                     .collection(CHATS_COLLECTION)
                     .doc(chatId)
                     .get();
@@ -486,7 +486,7 @@ export const MessageService = {
             // Keeping this would send duplicate notifications
             /*
             try {
-                const chatDoc = await getFirestore().collection(CHATS_COLLECTION).doc(chatId).get();
+                const chatDoc = await firestore().collection(CHATS_COLLECTION).doc(chatId).get();
                 const chatData = chatDoc.data();
                 
                 if (chatData?.participants) {
@@ -602,7 +602,7 @@ export const MessageService = {
 
             if (snapshot.empty) return;
 
-            const batch = getFirestore().batch();
+            const batch = firestore().batch();
             
             snapshot.docs.forEach(doc => {
                 const message = doc.data();
@@ -698,7 +698,7 @@ export const MessageService = {
 
             const batchSize = 500;
             const batches: FirebaseFirestoreTypes.WriteBatch[] = [];
-            let currentBatch = getFirestore().batch();
+            let currentBatch = firestore().batch();
             let operationCount = 0;
 
             snapshot.docs.forEach(doc => {
@@ -707,7 +707,7 @@ export const MessageService = {
 
                 if (operationCount >= batchSize) {
                     batches.push(currentBatch);
-                    currentBatch = getFirestore().batch();
+                    currentBatch = firestore().batch();
                     operationCount = 0;
                 }
             });

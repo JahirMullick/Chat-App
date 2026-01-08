@@ -1,4 +1,4 @@
-import firestore, { FirebaseFirestoreTypes, getFirestore } from "@react-native-firebase/firestore";
+import firestore from "@react-native-firebase/firestore";
 import { Story, StoryGroup } from "../../types/firestore.types";
 import { UserService } from "./userService";
 
@@ -14,12 +14,12 @@ export const StoryService = {
     /**
      * Get reference to stories collection
      */
-    getCollection: () => getFirestore().collection(STORIES_COLLECTION),
+    getCollection: () => firestore().collection(STORIES_COLLECTION),
 
     /**
      * Get reference to a specific story document
      */
-    getDocRef: (storyId: string) => getFirestore().collection(STORIES_COLLECTION).doc(storyId),
+    getDocRef: (storyId: string) => firestore().collection(STORIES_COLLECTION).doc(storyId),
 
     /**
      * Create a new story
@@ -266,7 +266,7 @@ export const StoryService = {
 
             if (snapshot.empty) return 0;
 
-            const batch = getFirestore().batch();
+            const batch = firestore().batch();
             snapshot.docs.forEach(doc => {
                 batch.delete(doc.ref);
             });

@@ -97,7 +97,7 @@ function HomeScreen() {
             subtitle: "Create a group with your contacts",
             icon: "people-outline",
             iconColor: Colors.success,
-            onPress: () => console.log("New Group pressed"),
+            onPress: () => navigation.navigate('NewGroup'),
         },
         {
             label: "New Channel",

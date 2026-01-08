@@ -32,6 +32,10 @@ export type MainStackParamList = {
         userId?: string;
     };
     NewChat: undefined;
+    NewGroup: undefined;
+    CreateGroup: {
+        selectedUsers: string[];
+    };
     Test: undefined;
     Profile: undefined;
     Settings: undefined;

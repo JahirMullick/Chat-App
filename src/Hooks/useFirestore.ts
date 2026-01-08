@@ -1,4 +1,4 @@
-import { getAuth } from "@react-native-firebase/auth";
+import auth, { getAuth } from "@react-native-firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import {
@@ -19,15 +19,15 @@ import {
  * Hook to get current user ID
  */
 export const useCurrentUserId = (): string | null => {
-    const auth = getAuth();
-    const [userId, setUserId] = useState<string | null>(auth.currentUser?.uid || null);
+    const authInstance = getAuth();
+    const [userId, setUserId] = useState<string | null>(authInstance.currentUser?.uid || null);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
+        const unsubscribe = auth().onAuthStateChanged(user => {
             setUserId(user?.uid || null);
         });
         return unsubscribe;
-    }, [auth]);
+    }, []);
 
     return userId;
 };
@@ -78,6 +78,33 @@ export const useUserProfile = (userId?: string) => {
     );
 
     return { profile, loading, error, updateProfile };
+};
+
+/**
+ * Hook to get and subscribe to all users
+ */
+export const useUsers = () => {
+    const [users, setUsers] = useState<UserProfile[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
+
+    useEffect(() => {
+        setLoading(true);
+        const unsubscribe = UserService.subscribeToAllUsers(
+            (allUsers) => {
+                setUsers(allUsers);
+                setLoading(false);
+            },
+            (err) => {
+                setError(err);
+                setLoading(false);
+            }
+        );
+
+        return unsubscribe;
+    }, []);
+
+    return { users, loading, error };
 };
 
 /**
