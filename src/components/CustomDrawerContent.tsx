@@ -15,6 +15,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Colors from "../constants/colors";
 import { useCurrentUserId, useUserProfile } from "../Hooks/useFirestore";
 import { SessionStorage } from "../utils/storage";
 
@@ -153,6 +154,14 @@ const styles = StyleSheet.create({
     },
     profileSection: {
         padding: 20,
+        backgroundColor: Colors.primary,
+        alignItems: "center",
+        justifyContent: "center",
+        top: 10,
+        borderStartEndRadius: 20,
+        borderStartStartRadius: 20,
+        borderEndEndRadius: 20,
+        borderEndStartRadius: 17,
         borderBottomWidth: 1,
         borderBottomColor: "#E5E5EA",
         marginBottom: 10,
@@ -181,12 +190,12 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 20,
         fontWeight: "600",
-        color: "#000",
+        color: "#fff",
         marginBottom: 4,
     },
     userEmail: {
         fontSize: 14,
-        color: "#8E8E93",
+        color: "rgba(255, 255, 255, 0.8)",
     },
     menuSection: {
         flex: 1,
@@ -214,7 +223,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 12,
-        paddingHorizontal: 16,
+        // paddingHorizontal: 16,
     },
     logoutText: {
         fontSize: 16,

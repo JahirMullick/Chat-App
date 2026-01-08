@@ -88,6 +88,7 @@ const getDateKey = (timestamp: any): string => {
 
 function ChatScreen() {
     const optionsModalRef = useRef<OptionsModalRef>(null);
+    const flatListRef = useRef<FlatList>(null);
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
     const route = useRoute();
     const insets = useSafeAreaInsets();
@@ -176,6 +177,18 @@ function ChatScreen() {
         };
     }, []);
 
+    // Auto-scroll to bottom when new messages arrive
+    useEffect(() => {
+        if (displayMessages.length > 0 && !refreshing) {
+            setTimeout(() => {
+                flatListRef.current?.scrollToIndex({
+                    index: displayMessages.length - 1,
+                    animated: true,
+                });
+            }, 100);
+        }
+    }, [displayMessages.length]);
+
     const handleRefresh = useCallback(async () => {
         if (!activeChatId) return;
         setRefreshing(true);
@@ -228,6 +241,16 @@ function ChatScreen() {
                         receiverId: recipientId, // ✅ ADD THIS LINE
                     }
                 );
+
+                // Scroll to end after sending message
+                setTimeout(() => {
+                    if (displayMessages.length > 0) {
+                        flatListRef.current?.scrollToIndex({
+                            index: displayMessages.length - 1,
+                            animated: true,
+                        });
+                    }
+                }, 200);
             }
         } catch (error) {
             console.error("Error sending message:", error);
@@ -474,12 +497,19 @@ function ChatScreen() {
                         </View>
                     ) : (
                         <FlatList
+                            ref={flatListRef}
                             data={displayMessages}
                             renderItem={renderMessage}
                             keyExtractor={(item) => item.id}
                             contentContainerStyle={styles.messagesList}
                             showsVerticalScrollIndicator={false}
                             style={styles.messagesFlatList}
+                            onScrollToIndexFailed={(info) => {
+                                const wait = new Promise(resolve => setTimeout(resolve, 500));
+                                wait.then(() => {
+                                    flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+                                });
+                            }}
                             refreshControl={
                                 <RefreshControl
                                     refreshing={refreshing}

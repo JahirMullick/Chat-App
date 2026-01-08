@@ -81,6 +81,12 @@ export default function SettingsScreen() {
                     onPress: () => console.log("Change username"),
                 },
                 {
+                    icon: "mail-outline",
+                    label: currentUser?.email || "Not available",
+                    value: "Email",
+                    onPress: () => console.log("Email info"),
+                },
+                {
                     icon: "information-circle-outline",
                     label: "Bio",
                     value: userProfile?.bio || "Add a few words about yourself",
@@ -312,7 +318,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#2196F3",
+        backgroundColor: "#517DA2",
         paddingHorizontal: 8,
         paddingTop: 40,
     },
@@ -333,7 +339,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     profileHeader: {
-        backgroundColor: "#2196F3",
+        backgroundColor: "#517DA2",
         alignItems: "center",
         paddingBottom: 24,
         paddingTop: 8,
@@ -392,7 +398,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#2196F3",
+        color: "#517DA2",
         paddingHorizontal: 16,
         marginBottom: 8,
         textTransform: "uppercase",

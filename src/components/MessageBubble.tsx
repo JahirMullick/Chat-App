@@ -45,34 +45,12 @@ function MessageBubbleBase({
 }: MessageBubbleBaseProps) {
     const isMe = message.isMe;
 
-    // Helper function to get initials from sender name (for fallback avatar)
-    const getInitials = (senderId: string): string => {
-        return senderId.charAt(0).toUpperCase();
-    };
-
     return (
         <TouchableOpacity
             activeOpacity={0.95}
             onLongPress={openOptionsModal}
             style={[styles.messageRow, isMe && styles.messageRowMe]}
         >
-            {/* Show avatar for messages from others */}
-            {!isMe && (
-                <View style={styles.avatarContainer}>
-                    {message.senderPhotoURL ? (
-                        <Image
-                            source={{ uri: message.senderPhotoURL }}
-                            style={styles.avatar}
-                        />
-                    ) : (
-                        <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                            <Text style={styles.avatarText}>
-                                {getInitials(message.senderId)}
-                            </Text>
-                        </View>
-                    )}
-                </View>
-            )}
             <View
                 style={[
                     styles.messageBubble,
