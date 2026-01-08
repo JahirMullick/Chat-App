@@ -3,6 +3,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     FlatList,
     Image,
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../constants/colors";
 import { useCurrentUserId, useUsers } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
+import { ChatService } from "../services/firestore";
 
 export default function CreateGroupScreen() {
     const insets = useSafeAreaInsets();
@@ -26,6 +28,7 @@ export default function CreateGroupScreen() {
     const currentUserId = useCurrentUserId();
     const { users } = useUsers();
     const [groupName, setGroupName] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
 
     // Get selected user details
     const selectedMembers = users.filter((user) =>
@@ -79,20 +82,47 @@ export default function CreateGroupScreen() {
             return;
         }
 
-        try {
-            // TODO: Implement group creation with ChatService
-            console.log("Creating group:", {
-                name: groupName,
-                members: selectedUsers,
-                admin: currentUserId,
-            });
+        if (!currentUserId) {
+            Alert.alert("Error", "You must be logged in to create a group");
+            return;
+        }
 
-            Alert.alert("Success", "Group created successfully", [
-                { text: "OK", onPress: () => navigation.navigate("Home" as never) },
-            ]);
+        if (selectedUsers.length === 0) {
+            Alert.alert("Error", "Please select at least one member");
+            return;
+        }
+
+        setIsCreating(true);
+
+        try {
+            // Generate random avatar color for the group
+            const colors = ["#9C7CF4", "#FF9800", "#E53935", "#66BB6A", "#42A5F5"];
+            const avatarColor = colors[Math.floor(Math.random() * colors.length)];
+
+            // Create group chat in database
+            const chatId = await ChatService.createGroupChat(
+                currentUserId,
+                selectedUsers,
+                groupName.trim(),
+                {
+                    avatarColor: avatarColor,
+                    category: "groups",
+                }
+            );
+
+            console.log("Group created successfully with ID:", chatId);
+
+            // Navigate to the new group chat
+            navigation.replace("Chat" as never, {
+                chatId: chatId,
+                name: groupName,
+                avatarColor: avatarColor,
+            } as never);
         } catch (error) {
             console.error("Error creating group:", error);
-            Alert.alert("Error", "Failed to create group");
+            Alert.alert("Error", "Failed to create group. Please try again.");
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -188,11 +218,16 @@ export default function CreateGroupScreen() {
 
             {/* Create Button */}
             <TouchableOpacity
-                style={styles.createButton}
+                style={[styles.createButton, isCreating && styles.createButtonDisabled]}
                 onPress={handleCreateGroup}
                 activeOpacity={0.8}
+                disabled={isCreating}
             >
-                <Ionicons name="checkmark" size={28} color="#fff" />
+                {isCreating ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                    <Ionicons name="checkmark" size={28} color="#fff" />
+                )}
             </TouchableOpacity>
         </View>
     );
@@ -344,5 +379,9 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
+    },
+    createButtonDisabled: {
+        backgroundColor: "#999",
+        opacity: 0.6,
     },
 });
