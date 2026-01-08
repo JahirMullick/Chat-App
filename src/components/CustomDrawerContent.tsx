@@ -155,9 +155,8 @@ const styles = StyleSheet.create({
     profileSection: {
         padding: 20,
         backgroundColor: Colors.primary,
-        alignItems: "center",
+        // alignItems: "center",
         justifyContent: "center",
-        top: 10,
         borderStartEndRadius: 20,
         borderStartStartRadius: 20,
         borderEndEndRadius: 20,
