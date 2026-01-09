@@ -103,6 +103,11 @@ export default function SettingsScreen() {
                     onPress: () => console.log("Chat Settings"),
                 },
                 {
+                    icon: "image-outline",
+                    label: "Change Background",
+                    onPress: () => navigation.navigate("ChatBackground" as never),
+                },
+                {
                     icon: "lock-closed-outline",
                     label: "Privacy and Security",
                     onPress: () => console.log("Privacy"),

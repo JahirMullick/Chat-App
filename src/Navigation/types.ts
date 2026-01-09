@@ -40,6 +40,7 @@ export type MainStackParamList = {
     Profile: undefined;
     Settings: undefined;
     ChatFolders: undefined;
+    ChatBackground: undefined;
 };
 
 // Root Stack Types (combines Auth and Main)

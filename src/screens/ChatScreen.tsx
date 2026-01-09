@@ -25,12 +25,14 @@ import OptionsModal, {
     OptionsModalRef
 } from "../components/hoc/withOptionsModal";
 import MessageBubble, { MessageBubbleData } from "../components/MessageBubble";
+import { getBackgroundSource } from "../constants/backgrounds";
 import Colors from "../constants/colors";
 import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
 import { useCurrentUserId, useMessages, useUserProfile } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
 import { ChatService, MessageService, ReactionService, UserService } from "../services/firestore";
+import { BackgroundStorage } from "../utils/storage";
 
 // Message type for display
 interface DisplayMessage {
@@ -102,9 +104,37 @@ function ChatScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [chatInfo, setChatInfo] = useState<any>(null);
     const [isGroupChat, setIsGroupChat] = useState(false);
+    const [backgroundImage, setBackgroundImage] = useState<any>(require("../../assets/images/bgte1.png"));
 
     // Get current user ID
     const currentUserId = useCurrentUserId();
+
+    // Load background image from storage
+    useEffect(() => {
+        const loadBackground = () => {
+            const bgId = BackgroundStorage.getBackground();
+            console.log("📸 Loading background, ID:", bgId);
+            const bgSource = getBackgroundSource(bgId);
+            console.log("📸 Background source:", bgSource ? "Found" : "Null");
+
+            if (bgSource) {
+                setBackgroundImage(bgSource);
+            } else {
+                // Use default background when none selected
+                setBackgroundImage(require("../../assets/images/bgte1.png"));
+            }
+        };
+
+        loadBackground();
+
+        // Reload background when screen comes into focus (after changing in settings)
+        const unsubscribe = navigation.addListener('focus', () => {
+            console.log("📸 Screen focused, reloading background");
+            loadBackground();
+        });
+
+        return unsubscribe;
+    }, [navigation]);
 
     // Get chat info from route params
     const initialChatId = (route.params as any)?.chatId;
@@ -509,7 +539,7 @@ function ChatScreen() {
 
             {/* Chat Background - extends behind input */}
             <ImageBackground
-                source={require("../../assets/images/bgte1.png")}
+                source={backgroundImage}
                 style={styles.chatBackground}
                 resizeMode="cover"
             >
