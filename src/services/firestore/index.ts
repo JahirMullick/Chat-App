@@ -3,6 +3,7 @@ import firestore from "@react-native-firebase/firestore";
 
 export { ChatService } from "./chatService";
 export { MessageService } from "./messageService";
+export { ReactionService } from "./reactionService";
 export { StoryService } from "./storyService";
 export { TabService } from "./tabService";
 export { TypingService } from "./typingService";

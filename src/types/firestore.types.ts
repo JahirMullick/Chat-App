@@ -77,6 +77,13 @@ export interface ParticipantInfo {
     isOnline?: boolean;
 }
 
+// Message Reaction
+export interface MessageReaction {
+    emoji: string;
+    userIds: string[]; // Array of userIds who reacted with this emoji
+    count: number;
+}
+
 export interface Message {
     id: string;
     chatId: string;
@@ -98,6 +105,7 @@ export interface Message {
         senderId: string;
         senderName: string;
     };
+    reactions?: { [emoji: string]: MessageReaction }; // Emoji -> Reaction mapping
     readBy: string[]; // userIds who have read this message
     deletedFor?: string[]; // userIds who deleted this message for themselves
 }

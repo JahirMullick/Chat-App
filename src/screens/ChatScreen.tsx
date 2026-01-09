@@ -30,7 +30,7 @@ import { useResponsive } from "../Controller/Styles/useResponsive";
 import { useBehavior } from "../Hooks/useBehavior";
 import { useCurrentUserId, useMessages, useUserProfile } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
-import { ChatService, MessageService, UserService } from "../services/firestore";
+import { ChatService, MessageService, ReactionService, UserService } from "../services/firestore";
 
 // Message type for display
 interface DisplayMessage {
@@ -50,6 +50,7 @@ interface DisplayMessage {
     videoParticipants?: string[];
     showDateSeparator?: boolean;
     dateLabel?: string;
+    reactions?: { [emoji: string]: { emoji: string; userIds: string[]; count: number } };
 }
 
 // Helper function to format time
@@ -161,6 +162,7 @@ function ChatScreen() {
                 isEdited: msg.isEdited,
                 imageUri: msg.mediaType === "image" ? msg.mediaUrl : undefined,
                 videoThumbnail: msg.mediaType === "video" ? msg.mediaThumbnail : undefined,
+                reactions: msg.reactions,
             };
         }).reverse(); // Reverse to show oldest first
 
@@ -370,6 +372,16 @@ function ChatScreen() {
         );
     }, [activeChatId]);
 
+    // Handle message reactions
+    const handleReaction = useCallback(async (messageId: string, emoji: string) => {
+        if (!activeChatId || !currentUserId) return;
+        try {
+            await ReactionService.toggleReaction(activeChatId, messageId, currentUserId, emoji);
+        } catch (error) {
+            console.error("Error toggling reaction:", error);
+        }
+    }, [activeChatId, currentUserId]);
+
     // Navigate to user profile screen
     const handleOpenProfile = useCallback(() => {
         if (!recipientId) return;
@@ -437,6 +449,9 @@ function ChatScreen() {
                 <MessageBubble
                     message={item as MessageBubbleData}
                     isGroupChat={isGroupChat}
+                    chatId={activeChatId || ''}
+                    currentUserId={currentUserId || ''}
+                    onReaction={handleReaction}
                     onDeleteForMe={handleDeleteMessageForMe}
                     onDeleteForEveryone={handleDeleteMessageForEveryone}
                 />

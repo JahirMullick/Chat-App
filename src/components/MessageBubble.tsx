@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
     Image,
     StyleSheet,
@@ -8,6 +8,9 @@ import {
     View
 } from "react-native";
 import Colors from "../constants/colors";
+import { MessageReaction } from "../types/firestore.types";
+import MessageReactions from "./MessageReactions";
+import ReactionPicker from "./ReactionPicker";
 import {
     MenuItemType,
     withOptionsModal,
@@ -29,81 +32,122 @@ export interface MessageBubbleData {
     senderId: string;
     senderName?: string;
     senderPhotoURL?: string | null;
+    reactions?: { [emoji: string]: MessageReaction };
 }
 
 interface MessageBubbleBaseProps {
     message: MessageBubbleData;
     isGroupChat?: boolean;
+    chatId?: string;
+    currentUserId?: string;
     onDeleteForMe: (messageId: string) => void;
     onDeleteForEveryone: (messageId: string) => void;
+    onReaction?: (messageId: string, emoji: string) => void;
     openOptionsModal: () => void;
+    showReactionPicker: boolean;
+    setShowReactionPicker: (show: boolean) => void;
 }
 
 function MessageBubbleBase({
     message,
     isGroupChat = false,
+    chatId,
+    currentUserId,
     onDeleteForMe,
     onDeleteForEveryone,
+    onReaction,
     openOptionsModal,
+    showReactionPicker,
+    setShowReactionPicker,
 }: MessageBubbleBaseProps) {
     const isMe = message.isMe;
 
+    const handleLongPress = () => {
+        openOptionsModal();
+    };
+
+    const handleReactionPress = (emoji: string) => {
+        if (onReaction && chatId) {
+            onReaction(message.id, emoji);
+        }
+        setShowReactionPicker(false);
+    };
+
     return (
-        <TouchableOpacity
-            activeOpacity={0.95}
-            onLongPress={openOptionsModal}
-            style={[styles.messageRow, isMe && styles.messageRowMe]}
-        >
-            <View
-                style={[
-                    styles.messageBubble,
-                    isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
-                ]}
-            >
-                {isGroupChat && !isMe && message.senderName && (
-                    <Text style={styles.senderName}>{message.senderName}</Text>
-                )}
-                {message.videoThumbnail ? (
-                    <View style={styles.videoContainer}>
-                        <Image
-                            source={{ uri: message.videoThumbnail }}
-                            style={styles.videoThumbnail}
-                        />
-                        <View style={styles.videoOverlay}>
-                            <View style={styles.videoParticipants}>
-                                {/* Participant avatars would go here */}
+        <>
+            <View style={[styles.messageRow, isMe && styles.messageRowMe]}>
+                <TouchableOpacity
+                    activeOpacity={0.95}
+                    onLongPress={handleLongPress}
+                    style={[styles.messageContainer]}
+                >
+                    <View
+                        style={[
+                            styles.messageBubble,
+                            isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
+                        ]}
+                    >
+                        {isGroupChat && !isMe && message.senderName && (
+                            <Text style={styles.senderName}>{message.senderName}</Text>
+                        )}
+                        {message.videoThumbnail ? (
+                            <View style={styles.videoContainer}>
+                                <Image
+                                    source={{ uri: message.videoThumbnail }}
+                                    style={styles.videoThumbnail}
+                                />
+                                <View style={styles.videoOverlay}>
+                                    <View style={styles.videoParticipants}>
+                                        {/* Participant avatars would go here */}
+                                    </View>
+                                    <Text style={styles.videoNames}>
+                                        {message.videoParticipants?.join(", ")}
+                                    </Text>
+                                    <Text style={styles.videoDuration}>{message.videoDuration}</Text>
+                                </View>
                             </View>
-                            <Text style={styles.videoNames}>
-                                {message.videoParticipants?.join(", ")}
+                        ) : (
+                            <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
+                                {message.text}
                             </Text>
-                            <Text style={styles.videoDuration}>{message.videoDuration}</Text>
+                        )}
+                        <View style={styles.messageFooter}>
+                            {message.isEdited && (
+                                <Text style={[styles.editedText, isMe && styles.timeTextMe]}>
+                                    edited{" "}
+                                </Text>
+                            )}
+                            <Text style={[styles.timeText, isMe && styles.timeTextMe]}>
+                                {message.time}
+                            </Text>
+                            {isMe && (
+                                <Ionicons
+                                    name={message.isRead ? "checkmark-done" : "checkmark"}
+                                    size={16}
+                                    color={Colors.success}
+                                    style={styles.readIcon}
+                                />
+                            )}
                         </View>
                     </View>
-                ) : (
-                    <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
-                        {message.text}
-                    </Text>
-                )}
-                <View style={styles.messageFooter}>
-                    {message.isEdited && (
-                        <Text style={[styles.editedText, isMe && styles.timeTextMe]}>
-                            edited{" "}
-                        </Text>
-                    )}
-                    <Text style={[styles.timeText, isMe && styles.timeTextMe]}>
-                        {message.time}
-                    </Text>
-                    {isMe && (
-                        <Ionicons
-                            name={message.isRead ? "checkmark-done" : "checkmark"}
-                            size={16}
-                            color={Colors.success}
-                            style={styles.readIcon}
-                        />
-                    )}
-                </View>
+                </TouchableOpacity>
+
+                {/* Display Reactions */}
+                <MessageReactions
+                    reactions={message.reactions}
+                    currentUserId={currentUserId}
+                    onReactionPress={handleReactionPress}
+                    isMe={isMe}
+                />
             </View>
-        </TouchableOpacity>
+
+            {/* Reaction Picker Modal */}
+            <ReactionPicker
+                visible={showReactionPicker}
+                onClose={() => setShowReactionPicker(false)}
+                onSelectEmoji={handleReactionPress}
+            />
+        </>
     );
 }
 
@@ -111,9 +155,18 @@ function MessageBubbleBase({
 const createMessageMenuItems = (
     message: MessageBubbleData,
     onDeleteForMe: (messageId: string) => void,
-    onDeleteForEveryone: (messageId: string) => void
+    onDeleteForEveryone: (messageId: string) => void,
+    onOpenReactionPicker: () => void
 ): MenuItemType[] => {
     const items: MenuItemType[] = [];
+
+    // Add Reaction option (always first)
+    items.push({
+        label: "Add Reaction",
+        icon: "happy-outline",
+        iconColor: Colors.primary,
+        onPress: onOpenReactionPicker,
+    });
 
     // Delete for Me option (always available)
     items.push({
@@ -149,14 +202,29 @@ const createMessageMenuItems = (
 // Export props for MessageBubble
 export interface MessageBubbleProps {
     message: MessageBubbleData;
+    chatId?: string;
+    currentUserId?: string;
+    isGroupChat?: boolean;
     onDeleteForMe: (messageId: string) => void;
     onDeleteForEveryone: (messageId: string) => void;
+    onReaction?: (messageId: string, emoji: string) => void;
 }
 
 // Create HOC wrapper
 const MessageBubbleWithModal = (props: MessageBubbleProps) => {
+    const [showReactionPicker, setShowReactionPicker] = useState(false);
+
+    const handleOpenReactionPicker = () => {
+        setShowReactionPicker(true);
+    };
+
     const menuItems = useMemo(
-        () => createMessageMenuItems(props.message, props.onDeleteForMe, props.onDeleteForEveryone),
+        () => createMessageMenuItems(
+            props.message,
+            props.onDeleteForMe,
+            props.onDeleteForEveryone,
+            handleOpenReactionPicker
+        ),
         [props.message, props.onDeleteForMe, props.onDeleteForEveryone]
     );
 
@@ -165,20 +233,29 @@ const MessageBubbleWithModal = (props: MessageBubbleProps) => {
         [menuItems]
     );
 
-    return <WrappedComponent {...props} />;
+    return (
+        <WrappedComponent
+            {...props}
+            showReactionPicker={showReactionPicker}
+            setShowReactionPicker={setShowReactionPicker}
+        />
+    );
 };
 
 export default MessageBubbleWithModal;
 
 const styles = StyleSheet.create({
     messageRow: {
-        flexDirection: "row",
+        flexDirection: "column",
         marginBottom: 12,
         paddingHorizontal: 16,
-        alignItems: "flex-end",
+        alignItems: "flex-start",
     },
     messageRowMe: {
-        justifyContent: "flex-end",
+        alignItems: "flex-end",
+    },
+    messageContainer: {
+        maxWidth: "80%",
     },
     avatarContainer: {
         marginRight: 8,
