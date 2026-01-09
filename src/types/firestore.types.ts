@@ -147,7 +147,7 @@ export interface Tab {
 
 // Typing indicator
 export interface TypingStatus {
-    oderId: string;
+    userId: string;
     isTyping: boolean;
     timestamp: FirebaseFirestoreTypes.Timestamp;
 }

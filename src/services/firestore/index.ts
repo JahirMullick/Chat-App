@@ -5,6 +5,7 @@ export { ChatService } from "./chatService";
 export { MessageService } from "./messageService";
 export { StoryService } from "./storyService";
 export { TabService } from "./tabService";
+export { TypingService } from "./typingService";
 export { UserService } from "./userService";
 
 // Re-export types for convenience
