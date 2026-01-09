@@ -27,11 +27,13 @@ export interface MessageBubbleData {
     videoDuration?: string;
     videoParticipants?: string[];
     senderId: string;
+    senderName?: string;
     senderPhotoURL?: string | null;
 }
 
 interface MessageBubbleBaseProps {
     message: MessageBubbleData;
+    isGroupChat?: boolean;
     onDeleteForMe: (messageId: string) => void;
     onDeleteForEveryone: (messageId: string) => void;
     openOptionsModal: () => void;
@@ -39,6 +41,7 @@ interface MessageBubbleBaseProps {
 
 function MessageBubbleBase({
     message,
+    isGroupChat = false,
     onDeleteForMe,
     onDeleteForEveryone,
     openOptionsModal,
@@ -57,6 +60,9 @@ function MessageBubbleBase({
                     isMe ? styles.messageBubbleMe : styles.messageBubbleOther,
                 ]}
             >
+                {isGroupChat && !isMe && message.senderName && (
+                    <Text style={styles.senderName}>{message.senderName}</Text>
+                )}
                 {message.videoThumbnail ? (
                     <View style={styles.videoContainer}>
                         <Image
@@ -210,6 +216,12 @@ const styles = StyleSheet.create({
     messageBubbleOther: {
         backgroundColor: Colors.messageBubbleOther,
         borderBottomLeftRadius: 4,
+    },
+    senderName: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: Colors.primary,
+        marginBottom: 4,
     },
     messageText: {
         fontSize: 15,

@@ -40,6 +40,7 @@ interface DisplayMessage {
     timestamp: any;
     isMe: boolean;
     senderId: string;
+    senderName?: string;
     senderPhotoURL?: string | null;
     isRead?: boolean;
     isEdited?: boolean;
@@ -98,6 +99,8 @@ function ChatScreen() {
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [chatInfo, setChatInfo] = useState<any>(null);
+    const [isGroupChat, setIsGroupChat] = useState(false);
 
     // Get current user ID
     const currentUserId = useCurrentUserId();
@@ -114,6 +117,18 @@ function ChatScreen() {
 
     // Track current chatId (may be null initially for new chats)
     const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId || null);
+
+    // Fetch chat info to determine if it's a group
+    useEffect(() => {
+        if (activeChatId) {
+            ChatService.getChatById(activeChatId).then((chat) => {
+                if (chat) {
+                    setChatInfo(chat);
+                    setIsGroupChat(chat.type === "group");
+                }
+            }).catch(console.error);
+        }
+    }, [activeChatId]);
 
     // Use Firestore messages if chatId exists
     const {
@@ -140,6 +155,7 @@ function ChatScreen() {
                 timestamp: msg.timestamp,
                 isMe: msg.senderId === currentUserId,
                 senderId: msg.senderId,
+                senderName: msg.senderName,
                 senderPhotoURL: msg.senderPhotoURL,
                 isRead: readByOthers, // True only if read by recipient(s)
                 isEdited: msg.isEdited,
@@ -420,6 +436,7 @@ function ChatScreen() {
                 )}
                 <MessageBubble
                     message={item as MessageBubbleData}
+                    isGroupChat={isGroupChat}
                     onDeleteForMe={handleDeleteMessageForMe}
                     onDeleteForEveryone={handleDeleteMessageForEveryone}
                 />
