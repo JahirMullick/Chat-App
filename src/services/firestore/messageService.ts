@@ -468,8 +468,13 @@ export const MessageService = {
             const messageRef = await MessageService.getCollection(chatId).add(messageData);
             console.log("✅ Message added to Firestore:", messageRef.id);
 
-            // Update chat's last message
-            await ChatService.updateLastMessage(chatId, text, senderId);
+            // Update chat's last message (pass media type if present)
+            await ChatService.updateLastMessage(
+                chatId, 
+                text, 
+                senderId,
+                options?.mediaType || "text"
+            );
             console.log("✅ Chat lastMessage updated");
 
             // Increment unread counts for other participants

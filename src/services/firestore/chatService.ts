@@ -3,6 +3,7 @@ import {
     Chat,
     ChatCategory,
     ChatType,
+    MessageType,
     ParticipantInfo,
     UserChat
 } from "../../types/firestore.types";
@@ -316,15 +317,26 @@ export const ChatService = {
     updateLastMessage: async (
         chatId: string,
         message: string,
-        senderId: string
+        senderId: string,
+        messageType?: MessageType
     ): Promise<void> => {
         try {
-            await ChatService.getDocRef(chatId).update({
+            const updateData: any = {
                 lastMessage: message,
                 lastMessageSenderId: senderId,
                 lastMessageTime: firestore.FieldValue.serverTimestamp(),
                 updatedAt: firestore.FieldValue.serverTimestamp(),
-            });
+            };
+
+            // Only set lastMessageType if it's a media message
+            if (messageType && messageType !== "text") {
+                updateData.lastMessageType = messageType;
+            } else {
+                // Clear lastMessageType for text messages
+                updateData.lastMessageType = firestore.FieldValue.delete();
+            }
+
+            await ChatService.getDocRef(chatId).update(updateData);
         } catch (error) {
             console.error("Error updating last message:", error);
             throw error;

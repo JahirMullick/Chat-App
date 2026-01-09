@@ -22,6 +22,7 @@ import PlusIcon from "../components/icons/Plus";
 import Colors from "../constants/colors";
 import { useChats, useCurrentUserId, useOnlineStatus, useStories, useTabs } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
+import { getMessagePreview } from "../types/firestore.types";
 
 // Helper function to format time
 const formatTime = (date: Date): string => {
@@ -158,7 +159,7 @@ function HomeScreen() {
                 name: chat.type === "group"
                     ? chat.name || "Unnamed Group"
                     : otherParticipant?.displayName || "Unknown",
-                message: chat.lastMessage || "No messages yet",
+                message: getMessagePreview(chat.lastMessageType, chat.lastMessage || "No messages yet"),
                 time: chat.lastMessageTime
                     ? formatTime(chat.lastMessageTime.toDate())
                     : "",

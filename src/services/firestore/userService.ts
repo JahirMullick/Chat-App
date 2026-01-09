@@ -2,6 +2,7 @@ import firestore from "@react-native-firebase/firestore";
 import { UserProfile } from "../../types/firestore.types";
 
 const USERS_COLLECTION = "users";
+const CHATS_COLLECTION = "chats";
 
 /**
  * User Service - Handles all user-related Firestore operations
@@ -36,6 +37,11 @@ export const UserService = {
             const now = firestore.FieldValue.serverTimestamp();
 
             if (userDoc.exists()) {
+                // Get previous data to check if displayName or photoURL changed
+                const prevData = userDoc.data() as UserProfile;
+                const nameChanged = prevData.displayName !== userData.displayName;
+                const photoChanged = prevData.photoURL !== userData.photoURL;
+
                 // Update existing user
                 await userRef.update({
                     email: userData.email,
@@ -46,6 +52,17 @@ export const UserService = {
                     updatedAt: now,
                 });
                 console.log("User profile updated:", uid);
+
+                // If displayName or photoURL changed, sync across all chats
+                if (nameChanged || photoChanged) {
+                    const syncUpdates: { displayName?: string | null; photoURL?: string | null } = {};
+                    if (nameChanged) syncUpdates.displayName = userData.displayName;
+                    if (photoChanged) syncUpdates.photoURL = userData.photoURL;
+                    
+                    UserService.syncParticipantDetailsAcrossChats(uid, syncUpdates).catch((err: Error) => {
+                        console.error("Failed to sync participant details on login:", err);
+                    });
+                }
             } else {
                 // Create new user
                 await userRef.set({
@@ -145,10 +162,28 @@ export const UserService = {
                 return acc;
             }, {} as Record<string, any>);
 
+            // Update user document
             await UserService.getDocRef(userId).update({
                 ...cleanUpdates,
                 updatedAt: firestore.FieldValue.serverTimestamp(),
             });
+
+            // If displayName or photoURL changed, sync across all chats
+            const shouldSyncChats = 'displayName' in cleanUpdates || 'photoURL' in cleanUpdates;
+            if (shouldSyncChats) {
+                const syncUpdates: { displayName?: string | null; photoURL?: string | null } = {};
+                if ('displayName' in cleanUpdates) {
+                    syncUpdates.displayName = cleanUpdates.displayName;
+                }
+                if ('photoURL' in cleanUpdates) {
+                    syncUpdates.photoURL = cleanUpdates.photoURL;
+                }
+                
+                // Sync participant details in all chats (run in background)
+                UserService.syncParticipantDetailsAcrossChats(userId, syncUpdates).catch((err: Error) => {
+                    console.error("Failed to sync participant details across chats:", err);
+                });
+            }
         } catch (error) {
             console.error("Error updating profile:", error);
             throw error;
@@ -251,6 +286,68 @@ export const UserService = {
             return users;
         } catch (error) {
             console.error("Error searching users by email:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Sync participant details across all chats when user updates their profile
+     * This ensures that name/photo changes are reflected in all chats
+     * @internal Used internally by updateProfile and createOrUpdateUser
+     */
+    syncParticipantDetailsAcrossChats: async (
+        userId: string,
+        updates: { displayName?: string | null; photoURL?: string | null }
+    ): Promise<void> => {
+        try {
+            console.log(`🔄 Syncing participant details for user ${userId}:`, updates);
+
+            // Get all chats where this user is a participant
+            const chatsSnapshot = await firestore()
+                .collection(CHATS_COLLECTION)
+                .where("participants", "array-contains", userId)
+                .get();
+
+            if (chatsSnapshot.empty) {
+                console.log("No chats found for user:", userId);
+                return;
+            }
+
+            console.log(`Found ${chatsSnapshot.docs.length} chats to update`);
+
+            // Batch update all chats
+            const batch = firestore().batch();
+            let updateCount = 0;
+
+            for (const doc of chatsSnapshot.docs) {
+                const chatRef = firestore().collection(CHATS_COLLECTION).doc(doc.id);
+                const updateData: any = {};
+
+                // Update only the fields that changed
+                if (updates.displayName !== undefined) {
+                    updateData[`participantDetails.${userId}.displayName`] = updates.displayName;
+                }
+                if (updates.photoURL !== undefined) {
+                    updateData[`participantDetails.${userId}.photoURL`] = updates.photoURL;
+                }
+
+                if (Object.keys(updateData).length > 0) {
+                    batch.update(chatRef, {
+                        ...updateData,
+                        updatedAt: firestore.FieldValue.serverTimestamp(),
+                    });
+                    updateCount++;
+                }
+            }
+
+            if (updateCount > 0) {
+                await batch.commit();
+                console.log(`✅ Successfully synced participant details across ${updateCount} chats`);
+            } else {
+                console.log("No updates needed");
+            }
+        } catch (error) {
+            console.error("❌ Error syncing participant details:", error);
             throw error;
         }
     },

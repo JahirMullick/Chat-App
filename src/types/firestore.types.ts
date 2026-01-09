@@ -47,6 +47,7 @@ export interface StoryGroup {
 export type ChatType = "individual" | "group";
 export type MessageStatus = "sending" | "sent" | "delivered" | "read";
 export type ChatCategory = "groups" | "channels" | "bots" | "design" | "books" | "ai" | "sign";
+export type MessageType = "text" | "image" | "video" | "audio" | "document";
 
 export interface Chat {
     id: string;
@@ -54,6 +55,7 @@ export interface Chat {
     participants: string[]; // userIds
     participantDetails: { [userId: string]: ParticipantInfo };
     lastMessage: string;
+    lastMessageType?: MessageType; // Type of the last message (for preview)
     lastMessageSenderId: string;
     lastMessageTime: FirebaseFirestoreTypes.Timestamp;
     createdBy: string;
@@ -111,6 +113,26 @@ export interface UserChat {
     lastReadAt: FirebaseFirestoreTypes.Timestamp | null;
     joinedAt: FirebaseFirestoreTypes.Timestamp;
 }
+
+/**
+ * Get display preview text for media messages
+ */
+export const getMessagePreview = (messageType: MessageType | undefined, text: string): string => {
+    if (!messageType || messageType === "text") return text;
+    
+    switch (messageType) {
+        case "image":
+            return "📷 Photo";
+        case "video":
+            return "🎥 Video";
+        case "audio":
+            return "🎵 Audio";
+        case "document":
+            return "📎 File";
+        default:
+            return text;
+    }
+};
 
 // Tab types
 export interface Tab {
