@@ -1,50 +1,117 @@
-# Welcome to your Expo app 👋
+# TestChat - Telegram Clone 🚀
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern messaging application built with [Expo](https://expo.dev) and React Native, featuring real-time chat, notifications, and media sharing capabilities.
 
-## Get started
+## Overview
 
-1. Install dependencies
+TestChat is a full-featured messaging platform that demonstrates advanced React Native development patterns including Firebase integration, push notifications, and real-time database synchronization.
+
+## App URL
+
+```
+Production: [Currently in devlopment Phease]
+Staging: [Currently in devlopment Phease]
+Development: [https://drive.google.com/drive/folders/1QjzarMbF2vxnxnFJ2Z_2TICj9a64aiFH?usp=drive_link]
+```
+
+## Features
+
+- 💬 Real-time messaging
+- 🔔 Push notifications (FCM)
+- 👥 Group chat support
+- 🎥 Media sharing
+- ✍️ Typing indicators
+- 🎭 Message reactions
+- 📱 Cross-platform (iOS & Android)
+- 🔐 Secure authentication
+
+## Prerequisites
+
+- Node.js 16+ and npm
+- Expo CLI
+- Firebase account
+- Android Studio (for Android development)
+- Xcode (for iOS development)
+
+## Installation
+
+1. Clone the repository
+
+   ```bash
+   git clone <your-repo-url>
+   cd testchat
+   ```
+
+2. Install dependencies
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. Configure Firebase
 
-   ```bash
-   npx expo start
-   ```
+   - Add your `google-services.json` (Android)
+   - Add your `GoogleService-Info.plist` (iOS)
 
-In the output, you'll find options to open the app in a
+## Running the App
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Start the development server:
 
 ```bash
-npm run reset-project
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Development Options
 
-## Learn more
+- **Android Emulator**: Press `a` in the terminal
+- **iOS Simulator**: Press `i` in the terminal
+- **Expo Go**: Scan the QR code with the Expo Go app
+- **Development Build**: Run on a physical device
 
-To learn more about developing your project with Expo, look at the following resources:
+## Project Structure
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/
+├── components/       # Reusable UI components
+├── screens/          # App screens
+├── navigation/       # Navigation configuration
+├── services/         # API and Firebase services
+├── hooks/            # Custom React hooks
+├── utils/            # Utility functions
+├── types/            # TypeScript type definitions
+└── constants/        # App constants and colors
+```
 
-## Join the community
+## Available Scripts
 
-Join our community of developers creating universal apps.
+```bash
+# Start development
+npm start
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Run on Android
+npm run android
+
+# Run on iOS
+npm run ios
+
+# Build for production
+npm run build
+```
+
+## Documentation
+
+- [Firebase Setup](./FCM_SETUP_GUIDE.md)
+- [Notification Architecture](./NOTIFICATION_ARCHITECTURE.md)
+- [Color System](./COLOR_CENTRALIZATION_SUMMARY.md)
+
+## Contributing
+
+Contributions are welcome! Please ensure your code follows the project's style guidelines.
+
+## Support
+
+For issues and questions, please create an issue in the repository.
+
+## License
+
+MIT License - See LICENSE file for details
