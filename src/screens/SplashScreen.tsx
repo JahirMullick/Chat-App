@@ -31,7 +31,7 @@ export default function SplashScreen({
                 <Logo width={120} height={120} />
             </View>
             <View style={{ marginTop: 20 }}>
-                <Text style={{ fontSize: 20, fontWeight: "bold" }}>TestChat App</Text>
+                <Text style={{ fontSize: 20, fontWeight: "bold" }}>Chat App</Text>
             </View>
         </View>
     );

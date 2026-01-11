@@ -4,12 +4,16 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { NavigationContainerRef } from "@react-navigation/native";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef, useState } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./Navigation/AppNavigator";
 import NoInternetScreen from "./screens/NoInternetScreen";
 import { NotificationService } from "./services/notificationService";
+
+// Hide Expo splash screen immediately to show custom splash screen
+SplashScreen.hideAsync();
 
 
 // Environment variable se Google Web Client ID access karo
