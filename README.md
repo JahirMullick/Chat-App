@@ -8,11 +8,9 @@ TestChat is a full-featured messaging platform that demonstrates advanced React 
 
 ## App URL
 
-```
-Production: [Currently in devlopment Phease]
-Staging: [Currently in devlopment Phease]
-Development: [https://drive.google.com/drive/folders/1QjzarMbF2vxnxnFJ2Z_2TICj9a64aiFH?usp=drive_link]
-```
+- **Production**: Currently in development Phase
+- **Staging**: Currently in development Phase
+- **Development**: [View App](https://drive.google.com/drive/folders/1QjzarMbF2vxnxnFJ2Z_2TICj9a64aiFH?usp=drive_link)
 
 ## Features
 
