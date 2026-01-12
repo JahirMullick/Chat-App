@@ -3,12 +3,13 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import {
-    Alert,
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -18,7 +19,8 @@ import { MainStackParamList } from "../Navigation/types";
 import { BackgroundStorage } from "../utils/storage";
 
 const { width } = Dimensions.get("window");
-const ITEM_WIDTH = (width - 48) / 3; // 3 columns with padding
+const ITEM_WIDTH = (width + 65) / 4;
+// const ITEM_WIDTH = (width - 48) / 3; // 3 columns with padding
 
 // Background images from assets/Backgrounds
 const BACKGROUNDS = [
@@ -104,20 +106,28 @@ export default function ChatBackgroundScreen() {
             if (selectedBackground) {
                 BackgroundStorage.setBackground(selectedBackground);
                 setSavedBackground(selectedBackground);
-                Alert.alert(
-                    "Success",
-                    "Background changed successfully!",
-                    [
-                        {
-                            text: "OK",
-                            onPress: () => navigation.goBack(),
-                        },
-                    ]
-                );
+
+                // Show toast message
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show(
+                        '✅ Background changed successfully!',
+                        ToastAndroid.SHORT
+                    );
+                }
+
+                // Navigate back after short delay
+                setTimeout(() => {
+                    navigation.goBack();
+                }, 500);
             }
         } catch (error) {
             console.error("Error saving background:", error);
-            Alert.alert("Error", "Failed to save background");
+            if (Platform.OS === 'android') {
+                ToastAndroid.show(
+                    '❌ Failed to save background',
+                    ToastAndroid.SHORT
+                );
+            }
         }
     };
 
