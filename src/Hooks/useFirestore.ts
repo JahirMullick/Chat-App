@@ -1,4 +1,4 @@
-import auth, { getAuth } from "@react-native-firebase/auth";
+import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import {
@@ -23,7 +23,7 @@ export const useCurrentUserId = (): string | null => {
     const [userId, setUserId] = useState<string | null>(authInstance.currentUser?.uid || null);
 
     useEffect(() => {
-        const unsubscribe = auth().onAuthStateChanged(user => {
+        const unsubscribe = onAuthStateChanged(authInstance, user => {
             setUserId(user?.uid || null);
         });
         return unsubscribe;
