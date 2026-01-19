@@ -16,6 +16,7 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
     const [initializing, setInitializing] = useState(true);
     const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
     const [profileCompleted, setProfileCompleted] = useState<boolean>(false);
+    const [userDocReady, setUserDocReady] = useState(false);
 
     // Test Firestore connection on app start
     useEffect(() => {
@@ -28,6 +29,9 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
     // Handle user state changes
     const onAuthStateChanged = async (user: FirebaseAuthTypes.User | null) => {
         setUser(user);
+        setUserDocReady(false); // Reset when auth state changes
+
+        console.log('🔐 Auth state changed:', user ? `User: ${user.email}` : 'No user');
 
         // Store session in MMKV when user logs in (for future use if needed)
         if (user) {
@@ -39,8 +43,10 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
 
             // Sync user to Firestore
             try {
+                console.log('📝 Syncing user to Firestore...');
                 // Get existing user profile first
                 const existingProfile = await UserService.getUserById(user.uid);
+                console.log('👤 Existing profile:', existingProfile ? 'Found' : 'Not found');
 
                 // Only update basic auth fields, preserve existing photoURL from Firestore
                 await UserService.createOrUpdateUser(user.uid, {
@@ -48,18 +54,27 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
                     displayName: user.displayName,
                     photoURL: existingProfile?.photoURL || user.photoURL, // Use Firestore photoURL if exists
                 });
+                console.log('✅ User document created/updated');
 
                 // Initialize user tabs if needed
                 await TabService.initializeUserTabs(user.uid);
+                console.log('✅ User tabs initialized');
 
                 // Check if profile is completed
-                setProfileCompleted(existingProfile?.profileCompleted || false);
+                const isProfileComplete = existingProfile?.profileCompleted || false;
+                setProfileCompleted(isProfileComplete);
+                console.log('📋 Profile completed:', isProfileComplete);
+
+                setUserDocReady(true); // ✅ Document is ready
+                console.log('✅ User document ready - navigation will proceed');
             } catch (error) {
-                console.error("Error syncing user to Firestore:", error);
+                console.error("❌ Error syncing user to Firestore:", error);
+                setUserDocReady(true); // Allow progress despite error
             }
         } else {
             // Clear session when user logs out
             SessionStorage.clearSession();
+            setUserDocReady(false);
         }
 
         if (initializing) setInitializing(false);
@@ -97,24 +112,31 @@ const AppNavigator = forwardRef<NavigationContainerRef<any>>((props, ref) => {
 
     // Show splash screen first
     if (showSplash) {
+        console.log('🎬 Showing initial splash screen');
         return <SplashScreen onFinish={handleSplashFinish} duration={2500} />;
     }
 
-    // Show nothing while initializing auth (splash already hidden means auth should be ready)
-    if (initializing) {
+    // Show nothing while initializing auth OR waiting for user doc to be created
+    if (initializing || (user && !userDocReady)) {
+        console.log('⏳ Waiting... initializing:', initializing, 'user:', !!user, 'userDocReady:', userDocReady);
         return <SplashScreen duration={0} />;
     }
+
+    console.log('🧭 Navigation state - user:', !!user, 'profileCompleted:', profileCompleted);
 
     return (
         <NavigationContainer ref={ref}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {user ? (
                     profileCompleted ? (
+                        // User is authenticated AND profile is complete → Main app
                         <Stack.Screen name="Main" component={MainStack} />
                     ) : (
+                        // User is authenticated BUT profile incomplete → CompleteProfile
                         <Stack.Screen name="Auth" component={AuthStack} />
                     )
                 ) : (
+                    // No user → Login/Signup
                     <Stack.Screen name="Auth" component={AuthStack} />
                 )}
             </Stack.Navigator>

@@ -13,6 +13,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    ToastAndroid,
     TouchableOpacity,
     View
 } from "react-native";
@@ -189,10 +190,12 @@ export default function CompleteProfileScreen() {
             console.log("Auth reloaded");
 
             // Show success message - AppNavigator will automatically navigate to Main stack
-            Alert.alert(
-                "Success",
-                "Profile completed successfully!"
-            );
+            if (Platform.OS === 'android') {
+                ToastAndroid.show(
+                    'Profile completed successfully!',
+                    ToastAndroid.SHORT
+                );
+            }
 
             console.log("=== handleCompleteProfile completed ===");
         } catch (error) {

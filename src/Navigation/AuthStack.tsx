@@ -1,3 +1,4 @@
+import { getAuth } from "@react-native-firebase/auth";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import CompleteProfileScreen from "../screens/CompleteProfileScreen";
@@ -9,13 +10,18 @@ import { AuthStackParamList } from "./types";
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthStack() {
+    // If user is authenticated, show CompleteProfile; otherwise show Login
+    const auth = getAuth();
+    const isAuthenticated = auth.currentUser !== null;
+    const initialRoute = isAuthenticated ? "CompleteProfile" : "Login";
+
+    console.log('🔑 AuthStack - isAuthenticated:', isAuthenticated, 'initialRoute:', initialRoute);
+
     return (
         <Stack.Navigator
-            initialRouteName="Login"
-            // initialRouteName="CompleteProfile"
+            initialRouteName={initialRoute}
             screenOptions={{
                 headerShown: false,
-                // animation: "slide_from_right",
                 animation: "simple_push",
             }}
         >
