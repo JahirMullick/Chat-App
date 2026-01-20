@@ -104,7 +104,7 @@ function ChatScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [chatInfo, setChatInfo] = useState<any>(null);
     const [isGroupChat, setIsGroupChat] = useState(false);
-    const [backgroundImage, setBackgroundImage] = useState<any>(require("../../assets/images/bgte1.png"));
+    const [backgroundImage, setBackgroundImage] = useState<any>(null);
 
     // Get current user ID
     const currentUserId = useCurrentUserId();
@@ -120,8 +120,8 @@ function ChatScreen() {
             if (bgSource) {
                 setBackgroundImage(bgSource);
             } else {
-                // Use default background when none selected
-                setBackgroundImage(require("../../assets/images/bgte1.png"));
+                // No background selected - use null for default white/transparent background
+                setBackgroundImage(null);
             }
         };
 
