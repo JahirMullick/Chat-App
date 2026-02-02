@@ -14,6 +14,7 @@ export interface UserProfile {
     bio?: string;
     pushToken?: string;
     fcmToken?: string;
+    devicePlatform?: string;
     lastTokenUpdate?: FirebaseFirestoreTypes.Timestamp;
     profileCompleted?: boolean;
     gender?: string;
@@ -127,7 +128,7 @@ export interface UserChat {
  */
 export const getMessagePreview = (messageType: MessageType | undefined, text: string): string => {
     if (!messageType || messageType === "text") return text;
-    
+
     switch (messageType) {
         case "image":
             return "📷 Photo";

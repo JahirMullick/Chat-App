@@ -99,6 +99,49 @@ export default function LoginScreen() {
         }
     };
 
+    // const handleGoogleSignIn = async () => {
+    //     setIsGoogleLoading(true);
+    //     try {
+    //         // Check if your device supports Google Play
+    //         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    //         // Get the users ID token
+    //         const signInResult = await GoogleSignin.signIn();
+
+    //         // Try the new style of google-sign in result, from v13+ of that module
+    //         let idToken = signInResult.data?.idToken;
+    //         if (!idToken) {
+    //             // if you are using older versions of google-signin, try old style result
+    //             idToken = (signInResult as any).idToken;
+    //         }
+    //         if (!idToken) {
+    //             throw new Error('No ID token found');
+    //         }
+
+    //         // ✅ Get the user's email from the sign-in result
+    //         const userEmail = signInResult.data?.user?.email || (signInResult as any).user?.email;
+
+    //         // ✅ Validate email domain
+    //         const allowedDomain = "@weavers-web.com";
+
+    //         // Create a Google credential with the token
+    //         const googleCredential = GoogleAuthProvider.credential(idToken);
+
+    //         // Sign-in the user with the credential
+    //         const authInstance = getAuth();
+    //         await signInWithCredential(authInstance, googleCredential);
+
+    //         console.log('Signed in with Google!');
+    //         console.log('User will be navigated by AppNavigator auth listener');
+    //         setIsGoogleLoading(false);
+    //         // Navigation is handled by AppNavigator based on auth state
+    //     } catch (error: any) {
+    //         setIsGoogleLoading(false);
+    //         console.error('Google Sign-In Error:', error);
+    //         Alert.alert("Error", error.message || "Google Sign-In failed. Please try again.");
+    //     }
+    // };
+
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
         try {
@@ -118,6 +161,22 @@ export default function LoginScreen() {
                 throw new Error('No ID token found');
             }
 
+            // ✅ Get the user's email from the sign-in result
+            const userEmail = signInResult.data?.user?.email || (signInResult as any).user?.email;
+
+            // ✅ Validate email domain
+            const allowedDomain = "@weavers-web.com";
+
+            if (!userEmail || !userEmail.toLowerCase().endsWith(allowedDomain)) {
+                // Sign out from Google to clear the session
+                await GoogleSignin.signOut();
+
+                throw new Error(
+                    // `Access restricted. Please use an email ending with ${allowedDomain}`
+                    `Access restricted. Please use an organization email `
+                );
+            }
+
             // Create a Google credential with the token
             const googleCredential = GoogleAuthProvider.credential(idToken);
 
@@ -132,7 +191,10 @@ export default function LoginScreen() {
         } catch (error: any) {
             setIsGoogleLoading(false);
             console.error('Google Sign-In Error:', error);
-            Alert.alert("Error", error.message || "Google Sign-In failed. Please try again.");
+            Alert.alert(
+                "Sign-In Failed",
+                error.message || "Google Sign-In failed. Please try again."
+            );
         }
     };
 

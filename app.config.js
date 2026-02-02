@@ -14,6 +14,9 @@ export default {
             supportsTablet: true,
             googleServicesFile: "./GoogleService-Info.plist", // Uncomment when you have iOS Firebase config
             bundleIdentifier: "com.anonymous.testchat",
+            infoPlist: {
+                NSFaceIDUsageDescription: "We use Face ID to unlock the app securely"
+            }
         },
         android: {
             googleServicesFile: "./google-services.json",
@@ -29,6 +32,8 @@ export default {
             package: "com.anonymous.testchat",
             permissions: [
                 "android.permission.POST_NOTIFICATIONS",
+                "USE_BIOMETRIC",
+                "USE_FINGERPRINT"
             ],
         },
         web: {
