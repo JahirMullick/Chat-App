@@ -1,4 +1,5 @@
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
     FlatList,
@@ -28,6 +29,7 @@ const PACKAGES = [
 
 // export default function MyStarScreen() {
 const MyStarScreen: React.FC = () => {
+    const navigation = useNavigation();
     const [modalVisible, setModalVisible] = useState(false);
 
     // Helper to render the custom Star Graphic (Composite of icons)
@@ -56,7 +58,7 @@ const MyStarScreen: React.FC = () => {
 
                 {/* Header Back Button */}
                 <View style={styles.header}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Ionicons name="arrow-back" size={26} color="black" />
                     </TouchableOpacity>
                 </View>
