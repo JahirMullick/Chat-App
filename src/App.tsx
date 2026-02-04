@@ -139,7 +139,6 @@ import { NavigationContainerRef } from "@react-navigation/native";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
-import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -149,8 +148,7 @@ import AppNavigator from "./Navigation/AppNavigator";
 import NoInternetScreen from "./screens/NoInternetScreen";
 import { NotificationService } from "./services/notificationService";
 
-// Hide Expo splash screen immediately to show custom splash screen
-SplashScreen.hideAsync();
+// SplashScreen.hideAsync(); // Commented out: using only custom splash screen
 
 // Environment variable se Google Web Client ID access karo
 const googleWebClientId = Constants.expoConfig?.extra?.googleWebClientId;

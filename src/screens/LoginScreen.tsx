@@ -161,21 +161,25 @@ export default function LoginScreen() {
                 throw new Error('No ID token found');
             }
 
+            // TODO: Below code is for domain restriction - comment out if needed
+
             // ✅ Get the user's email from the sign-in result
-            const userEmail = signInResult.data?.user?.email || (signInResult as any).user?.email;
+            // const userEmail = signInResult.data?.user?.email || (signInResult as any).user?.email;
 
             // ✅ Validate email domain
-            const allowedDomain = "@weavers-web.com";
+            // const allowedDomain = "@weavers-web.com";
 
-            if (!userEmail || !userEmail.toLowerCase().endsWith(allowedDomain)) {
-                // Sign out from Google to clear the session
-                await GoogleSignin.signOut();
+            // if (!userEmail || !userEmail.toLowerCase().endsWith(allowedDomain)) {
+            //     // Sign out from Google to clear the session
+            //     await GoogleSignin.signOut();
 
-                throw new Error(
-                    // `Access restricted. Please use an email ending with ${allowedDomain}`
-                    `Access restricted. Please use an organization email `
-                );
-            }
+            //     throw new Error(
+            //         // `Access restricted. Please use an email ending with ${allowedDomain}`
+            //         `Access restricted. Please use an organization email `
+            //     );
+            // }
+
+            // TODO: Above code is for domain restriction - comment out if needed
 
             // Create a Google credential with the token
             const googleCredential = GoogleAuthProvider.credential(idToken);

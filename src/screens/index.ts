@@ -4,6 +4,7 @@ export { default as CompleteProfileScreen } from "./CompleteProfileScreen";
 export { default as ForgotPasswordScreen } from "./ForgotPasswordScreen";
 export { default as HomeScreen } from "./HomeScreen";
 export { default as LoginScreen } from "./LoginScreen";
+export { default as MyStarScreen } from "./MyStarScreen";
 export { default as NewChatScreen } from "./NewChatScreen";
 export { default as QrProfileScreen } from "./QrProfileScreen";
 export { default as SettingsScreen } from "./SettingsScreen";
