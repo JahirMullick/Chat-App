@@ -24,11 +24,7 @@ const ITEM_WIDTH = (width + 65) / 4;
 
 // Background images from assets/Backgrounds
 const BACKGROUNDS = [
-    {
-        id: "none",
-        name: "None",
-        source: null,
-    },
+
     {
         id: "batman",
         name: "Batman",
@@ -69,6 +65,27 @@ const BACKGROUNDS = [
         name: "Tweety Bird",
         source: require("../../assets/Backgrounds/tweety_bird.jpg"),
     },
+    {
+        id: "anime",
+        name: "Anime",
+        source: require("../../assets/Backgrounds/anime.jpg"),
+    },
+    {
+        id: "a1",
+        name: "A1",
+        source: require("../../assets/Backgrounds/a1.jpeg"),
+    },
+    {
+        id: "a2",
+        name: "A2",
+        source: require("../../assets/Backgrounds/a2.jpeg"),
+    },
+    {
+        id: "a3",
+        name: "A3",
+        source: require("../../assets/Backgrounds/a3.jpeg"),
+    },
+
 ];
 
 export default function ChatBackgroundScreen() {
