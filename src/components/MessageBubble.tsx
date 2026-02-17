@@ -1,9 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from 'expo-clipboard';
 import React, { useMemo, useState } from "react";
 import {
+    Alert,
     Image,
+    Platform,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View
 } from "react-native";
@@ -156,9 +160,20 @@ const createMessageMenuItems = (
     message: MessageBubbleData,
     onDeleteForMe: (messageId: string) => void,
     onDeleteForEveryone: (messageId: string) => void,
-    onOpenReactionPicker: () => void
+    onOpenReactionPicker: () => void,
+    onSave?: () => void
 ): MenuItemType[] => {
     const items: MenuItemType[] = [];
+
+    // Save option
+    if (onSave) {
+        items.push({
+            label: "Save Message",
+            icon: "bookmark-outline",
+            iconColor: Colors.iosBlue,
+            onPress: onSave,
+        });
+    }
 
     // Add Reaction option (always first)
     items.push({
@@ -190,9 +205,19 @@ const createMessageMenuItems = (
     items.push({
         label: "Copy",
         icon: "copy-outline",
-        onPress: () => {
-            // TODO: Implement copy to clipboard
-            console.log("Copy message:", message.text);
+        onPress: async () => {
+            if (message.text) {
+                await Clipboard.setStringAsync(message.text);
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("Message copied", ToastAndroid.SHORT);
+                } else {
+                    Alert.alert("Success", "Message copied to clipboard");
+                }
+            } else {
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("No text to copy", ToastAndroid.SHORT);
+                }
+            }
         },
     });
 
@@ -208,6 +233,7 @@ export interface MessageBubbleProps {
     onDeleteForMe: (messageId: string) => void;
     onDeleteForEveryone: (messageId: string) => void;
     onReaction?: (messageId: string, emoji: string) => void;
+    onSave?: (message: MessageBubbleData) => void; // New Prop
 }
 
 // Create HOC wrapper
@@ -218,14 +244,22 @@ const MessageBubbleWithModal = (props: MessageBubbleProps) => {
         setShowReactionPicker(true);
     };
 
+    const handleSave = useMemo(() => {
+        if (props.onSave) {
+            return () => props.onSave!(props.message);
+        }
+        return undefined;
+    }, [props.onSave, props.message]);
+
     const menuItems = useMemo(
         () => createMessageMenuItems(
             props.message,
             props.onDeleteForMe,
             props.onDeleteForEveryone,
-            handleOpenReactionPicker
+            handleOpenReactionPicker,
+            handleSave
         ),
-        [props.message, props.onDeleteForMe, props.onDeleteForEveryone]
+        [props.message, props.onDeleteForMe, props.onDeleteForEveryone, handleSave]
     );
 
     const WrappedComponent = useMemo(

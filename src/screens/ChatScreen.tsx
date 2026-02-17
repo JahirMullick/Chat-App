@@ -15,6 +15,7 @@ import {
     StatusBar,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View
 } from "react-native";
@@ -140,7 +141,7 @@ function ChatScreen() {
     const initialChatId = (route.params as any)?.chatId;
     const recipientId = (route.params as any)?.recipientId; // For new chats
     const chatName = (route.params as any)?.name || "Chat";
-    const chatAvatar = (route.params as any)?.avatar;
+    const chatAvatar = (route.params as any)?.avatar || null;
     const avatarColor = (route.params as any)?.avatarColor || Colors.avatarDefault;
 
     // Get recipient's profile to track online status in real-time
@@ -412,6 +413,79 @@ function ChatScreen() {
         }
     }, [activeChatId, currentUserId]);
 
+    const handleSaveMessage = useCallback(async (message: MessageBubbleData) => {
+        if (!currentUserId) return;
+
+        try {
+            // Find or create Saved Messages chat (self-chat)
+            let savedChatId: string | null = null;
+
+            // Check if a self-chat exists
+            const existingChat = await ChatService.findIndividualChat(currentUserId, currentUserId);
+
+            if (existingChat) {
+                savedChatId = existingChat.id;
+            } else {
+                savedChatId = await ChatService.createIndividualChat(currentUserId, currentUserId);
+            }
+
+            if (savedChatId) {
+                // Determine message type and content
+                let mediaType: "image" | "video" | undefined;
+                if (message.videoThumbnail) {
+                    mediaType = "video";
+                } else if (message.imageUri) {
+                    mediaType = "image";
+                }
+
+                // Create a caption including original sender info if not sent by me (and not "Me" sender name)
+                const originalSender = message.senderName || "Unknown";
+
+                // If the message is already from me, or from "Me", don't add the prefix
+                const shouldAddPrefix = !message.isMe && originalSender !== "Me" && originalSender !== "Saved Messages";
+
+                // Format: "Sender Name" then "Message"
+                const forwardPrefix = shouldAddPrefix ? `${originalSender}\n` : "";
+
+                // If it's pure media without text, handle the description
+                const mediaDesc = (mediaType === "image" ? "Photo" : mediaType === "video" ? "Video" : "Forwarded Message");
+                const textDetail = message.text || mediaDesc;
+
+                // Combine prefix and content
+                const textContent = `${forwardPrefix}${textDetail}`;
+
+                await MessageService.sendMessage(
+                    savedChatId,
+                    currentUserId,
+                    "Me",
+                    textContent,
+                    {
+                        receiverId: currentUserId,
+                        mediaUrl: message.imageUri, // Assumption: imageUri holds the main media URL
+                        mediaThumbnail: message.videoThumbnail,
+                        mediaType,
+                        // Fix types: ensure optional values are strings or undefined
+                        videoDuration: message.videoDuration || undefined,
+                        // Note: replyTo structure must match what sendMessage expects
+                    }
+                );
+
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("Message saved to Saved Messages", ToastAndroid.SHORT);
+                } else {
+                    Alert.alert("Success", "Message saved to Saved Messages");
+                }
+            }
+        } catch (error) {
+            console.error("Error saving message:", error);
+            if (Platform.OS === 'android') {
+                ToastAndroid.show("Failed to save message", ToastAndroid.SHORT);
+            } else {
+                Alert.alert("Error", "Failed to save message");
+            }
+        }
+    }, [currentUserId]);
+
     // Navigate to user profile screen
     const handleOpenProfile = useCallback(() => {
         if (!recipientId) return;
@@ -466,6 +540,10 @@ function ChatScreen() {
         },
     ], [handleClearHistory, handleDeleteChatForMe, handleDeleteChatForEveryone]);
 
+    const isSavedMessagesChat = useMemo(() => {
+        return recipientId === currentUserId || chatName === "Saved Messages" || chatName === "Saved Messages (Me)";
+    }, [recipientId, currentUserId, chatName]);
+
     const renderMessage = ({ item }: { item: DisplayMessage }) => {
         return (
             <>
@@ -484,6 +562,7 @@ function ChatScreen() {
                     onReaction={handleReaction}
                     onDeleteForMe={handleDeleteMessageForMe}
                     onDeleteForEveryone={handleDeleteMessageForEveryone}
+                    onSave={!isSavedMessagesChat ? handleSaveMessage : undefined}
                 />
             </>
         );

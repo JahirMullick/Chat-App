@@ -109,8 +109,8 @@ export default function SettingsScreen() {
                 },
                 {
                     icon: "lock-closed-outline",
-                    label: "Privacy and Security",
-                    onPress: () => console.log("Privacy"),
+                    label: "Security",
+                    onPress: () => navigation.navigate("Security"),
                 },
                 {
                     icon: "notifications-outline",

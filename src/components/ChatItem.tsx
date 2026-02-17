@@ -17,6 +17,7 @@ export type ChatItemType = {
     avatarColor?: string;
     category?: "groups" | "channels" | "bots" | "design" | "books" | "ai" | "sign";
     recipientId?: string;
+    isSavedMessages?: boolean;
 };
 
 interface ChatItemProps {
@@ -41,34 +42,31 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
         }
     };
 
-    // Helper function to get initials from name
-    const getInitials = (name: string): string => {
-        const words = name.trim().split(/\s+/);
-        if (words.length >= 2) {
-            return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
-        }
-        return name.charAt(0).toUpperCase();
-    };
-
     return (
-        <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
-            {/* Avatar */}
-            <View style={styles.avatarContainer}>
-                <View style={[styles.avatar, { backgroundColor: item.avatarColor || "#007AFF" }]}>
-                    {item.avatarUrl ? (
-                        <Image source={{ uri: item.avatarUrl }} style={styles.avatarImage} />
-                    ) : (
-                        <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
-                    )}
-                </View>
-                {item.isOnline && <View style={styles.onlineBadge} />}
+        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+            {/* Avatar Section */}
+            <View style={[styles.avatarContainer, { backgroundColor: item.avatarColor || '#ccc' }]}>
+                {item.isSavedMessages ? (
+                    <Ionicons name="bookmark" size={24} color="#fff" />
+                ) : item.avatarUrl ? (
+                    <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
+                ) : (
+                    <Text style={styles.avatarText}>
+                        {item.name ? item.name.charAt(0).toUpperCase() : "?"}
+                    </Text>
+                )}
+
+                {/* Online Status Indicator */}
+                {item.isOnline && !item.isSavedMessages && (
+                    <View style={styles.onlineIndicator} />
+                )}
             </View>
 
-            {/* Content */}
-            <View style={styles.content}>
-                <View style={styles.topRow}>
-                    <View style={styles.nameRow}>
-                        <Text style={styles.name} numberOfLines={1}>
+            {/* Chat Details Section */}
+            <View style={styles.contentContainer}>
+                <View style={styles.headerContainer}>
+                    <View style={styles.nameContainer}>
+                        <Text style={styles.nameText} numberOfLines={1}>
                             {item.name}
                         </Text>
                         {item.isVerified && (
@@ -88,14 +86,14 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
                             />
                         )}
                     </View>
-                    <View style={styles.timeRow}>
+                    <View style={styles.timeStatusContainer}>
                         {getStatusIcon()}
-                        <Text style={styles.time}>{item.time}</Text>
+                        <Text style={styles.timeText}>{item.time}</Text>
                     </View>
                 </View>
 
-                <View style={styles.bottomRow}>
-                    <Text style={styles.message} numberOfLines={1}>
+                <View style={styles.messageContainer}>
+                    <Text style={styles.messageText} numberOfLines={1}>
                         {item.message}
                     </Text>
                     {item.hasMention && (
@@ -115,7 +113,7 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
 }
 
 const styles = StyleSheet.create({
-    row: {
+    container: {
         flexDirection: "row",
         paddingHorizontal: 16,
         paddingVertical: 10,
@@ -124,8 +122,6 @@ const styles = StyleSheet.create({
     avatarContainer: {
         position: "relative",
         marginRight: 12,
-    },
-    avatar: {
         width: 56,
         height: 56,
         borderRadius: 28,
@@ -133,16 +129,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
         overflow: "hidden",
     },
-    avatarImage: {
+    avatar: {
         width: 56,
         height: 56,
+        borderRadius: 28,
     },
     avatarText: {
         fontSize: 22,
         fontWeight: "600",
         color: "#fff",
     },
-    onlineBadge: {
+    onlineIndicator: {
         position: "absolute",
         bottom: 2,
         right: 2,
@@ -153,26 +150,26 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: "#fff",
     },
-    content: {
+    contentContainer: {
         flex: 1,
         justifyContent: "center",
         borderBottomWidth: 0.5,
         borderBottomColor: "#E5E5EA",
         paddingBottom: 10,
     },
-    topRow: {
+    headerContainer: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 4,
     },
-    nameRow: {
+    nameContainer: {
         flexDirection: "row",
         alignItems: "center",
         flex: 1,
         marginRight: 8,
     },
-    name: {
+    nameText: {
         fontSize: 16,
         fontWeight: "600",
         color: "#000",
@@ -184,20 +181,20 @@ const styles = StyleSheet.create({
     mutedIcon: {
         marginLeft: 4,
     },
-    timeRow: {
+    timeStatusContainer: {
         flexDirection: "row",
         alignItems: "center",
     },
-    time: {
+    timeText: {
         fontSize: 14,
         color: "#8E8E93",
         marginLeft: 4,
     },
-    bottomRow: {
+    messageContainer: {
         flexDirection: "row",
         alignItems: "center",
     },
-    message: {
+    messageText: {
         flex: 1,
         fontSize: 15,
         color: "#8E8E93",

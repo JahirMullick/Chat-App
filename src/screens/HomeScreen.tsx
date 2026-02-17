@@ -100,13 +100,13 @@ function HomeScreen() {
             iconColor: Colors.success,
             onPress: () => navigation.navigate('NewGroup'),
         },
-        {
-            label: "New Channel",
-            subtitle: "Create a channel to broadcast",
-            icon: "megaphone-outline",
-            iconColor: Colors.warning,
-            onPress: () => console.log("New Channel pressed"),
-        },
+        // {
+        //     label: "New Channel",
+        //     subtitle: "Create a channel to broadcast",
+        //     icon: "megaphone-outline",
+        //     iconColor: Colors.warning,
+        //     onPress: () => console.log("New Channel pressed"),
+        // },
         {
             label: "Secret Chat",
             subtitle: "End-to-end encrypted chat",
@@ -135,7 +135,7 @@ function HomeScreen() {
 
     // Convert Firestore chats to ChatItemType format
     const chatsData: ChatItemType[] = useMemo(() => {
-        return firestoreChats.map(({ chat, userChat }): ChatItemType => {
+        const mappedChats = firestoreChats.map(({ chat, userChat }): ChatItemType => {
             // For individual chats, get the other participant's info (not the current user)
             const otherParticipantId = chat.participants.find(
                 p => p !== currentUserId
@@ -143,6 +143,27 @@ function HomeScreen() {
             const otherParticipant = otherParticipantId
                 ? chat.participantDetails[otherParticipantId]
                 : null;
+
+            // Handle Saved Messages (Chat with self)
+            if (!otherParticipantId && chat.participants.includes(currentUserId || "")) {
+                return {
+                    id: chat.id,
+                    name: "Saved Messages",
+                    message: getMessagePreview(chat.lastMessageType, chat.lastMessage || "Save messages here"),
+                    time: chat.lastMessageTime
+                        ? formatTime(chat.lastMessageTime.toDate())
+                        : "",
+                    unreadCount: userChat.unreadCount > 0 ? userChat.unreadCount : undefined,
+                    isMuted: userChat.isMuted,
+                    isOnline: true,
+                    isVerified: false,
+                    avatarUrl: undefined, // Will be handled by ChatItem to show bookmark
+                    avatarColor: Colors.iosBlue,
+                    category: chat.category,
+                    recipientId: currentUserId || undefined,
+                    isSavedMessages: true,
+                };
+            }
 
             // Get avatar URL and color
             const avatarUrl = chat.type === "group"
@@ -173,6 +194,23 @@ function HomeScreen() {
                 recipientId: otherParticipantId,
             };
         });
+
+        // Ensure "Saved Messages" chat exists at the top
+        const hasSavedMessages = mappedChats.some(chat => chat.isSavedMessages);
+        if (!hasSavedMessages && currentUserId) {
+            mappedChats.unshift({
+                id: "saved_messages", // Virtual ID initially, will create on first use
+                name: "Saved Messages (Me)",
+                message: "Save messages here",
+                time: "",
+                isOnline: true,
+                avatarColor: Colors.iosBlue,
+                recipientId: currentUserId,
+                isSavedMessages: true
+            });
+        }
+
+        return mappedChats;
     }, [firestoreChats, currentUserId]);
 
     // Convert Firestore stories to display format

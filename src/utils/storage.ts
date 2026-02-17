@@ -1,3 +1,4 @@
+import * as SecureStore from "expo-secure-store";
 import { MMKV } from "react-native-mmkv";
 
 // Lazy initialization - only create MMKV when actually needed
@@ -11,7 +12,7 @@ const getStorage = (): MMKV | null => {
     if (_mmkvFailed) {
         return null;
     }
-    
+
     if (!_storage) {
         try {
             _storage = new MMKV();
@@ -31,6 +32,11 @@ export const STORAGE_KEYS = {
     USER_DATA: "user_data",
     APP_STATE: "app_state",
     CHAT_BACKGROUND: "chat_background",
+    // Security Keys
+    PASSCODE: "passcode",
+    ENABLE_FINGERPRINT: "enable_fingerprint",
+    AUTO_LOCK: "auto_lock",
+    SHOW_IN_TASK_SWITCHER: "show_in_task_switcher",
 } as const;
 
 // Session management functions
@@ -61,7 +67,7 @@ export const SessionStorage = {
     getSession: (): string | undefined => {
         try {
             const storage = getStorage();
-            return storage ? storage.getString(STORAGE_KEYS.USER_SESSION) : 
+            return storage ? storage.getString(STORAGE_KEYS.USER_SESSION) :
                 fallbackStorage.get(STORAGE_KEYS.USER_SESSION) as string | undefined;
         } catch (error) {
             console.log("MMKV getSession error:", error);
@@ -204,6 +210,83 @@ export const BackgroundStorage = {
             console.log("MMKV clearBackground error:", error);
         }
     },
+};
+
+// Security storage functions
+export const SecurityStorage = {
+    setPasscode: async (passcode: string) => {
+        try {
+            await SecureStore.setItemAsync("app_pin", passcode);
+        } catch (error) {
+            console.log("SecureStore setPasscode error:", error);
+        }
+    },
+    getPasscode: async (): Promise<string | null> => {
+        try {
+            return await SecureStore.getItemAsync("app_pin");
+        } catch (error) {
+            console.log("SecureStore getPasscode error:", error);
+            return null;
+        }
+    },
+    clearPasscode: async () => {
+        try {
+            await SecureStore.deleteItemAsync("app_pin");
+        } catch (error) {
+            console.log("SecureStore clearPasscode error:", error);
+        }
+    },
+    setEnableFingerprint: (enabled: boolean) => {
+        try {
+            const storage = getStorage();
+            if (storage) storage.set(STORAGE_KEYS.ENABLE_FINGERPRINT, enabled);
+        } catch (error) {
+            console.log("MMKV setEnableFingerprint error:", error);
+        }
+    },
+    getEnableFingerprint: (): boolean => {
+        try {
+            const storage = getStorage();
+            if (storage) return storage.getBoolean(STORAGE_KEYS.ENABLE_FINGERPRINT) ?? false;
+        } catch (error) {
+            console.log("MMKV getEnableFingerprint error:", error);
+        }
+        return false;
+    },
+    setAutoLock: (value: string) => {
+        try {
+            const storage = getStorage();
+            if (storage) storage.set(STORAGE_KEYS.AUTO_LOCK, value);
+        } catch (error) {
+            console.log("MMKV setAutoLock error:", error);
+        }
+    },
+    getAutoLock: (): string => {
+        try {
+            const storage = getStorage();
+            if (storage) return storage.getString(STORAGE_KEYS.AUTO_LOCK) ?? "in 1 minute";
+        } catch (error) {
+            console.log("MMKV getAutoLock error:", error);
+        }
+        return "in 1 minute";
+    },
+    setShowInTaskSwitcher: (enabled: boolean) => {
+        try {
+            const storage = getStorage();
+            if (storage) storage.set(STORAGE_KEYS.SHOW_IN_TASK_SWITCHER, enabled);
+        } catch (error) {
+            console.log("MMKV setShowInTaskSwitcher error:", error);
+        }
+    },
+    getShowInTaskSwitcher: (): boolean => {
+        try {
+            const storage = getStorage();
+            if (storage) return storage.getBoolean(STORAGE_KEYS.SHOW_IN_TASK_SWITCHER) ?? true;
+        } catch (error) {
+            console.log("MMKV getShowInTaskSwitcher error:", error);
+        }
+        return true;
+    }
 };
 
 // Export getter for storage (lazy init)

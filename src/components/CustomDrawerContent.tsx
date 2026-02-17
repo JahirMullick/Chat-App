@@ -112,14 +112,29 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                                 props.navigation.getParent()?.navigate("Settings");
                             } else if (item.route === "Profile") {
                                 props.navigation.getParent()?.navigate("Settings");
+                            } else if (item.route === "Contacts") {
+                                // Navigate to Contacts screen
+                                props.navigation.getParent()?.navigate("Contacts");
+                            } else if (item.route === "Saved") {
+                                // Close drawer first
+                                props.navigation.closeDrawer();
+                                // Navigate to Chat screen for Saved Messages
+                                props.navigation.getParent()?.navigate("Chat", {
+                                    chatId: "saved_messages",
+                                    name: "Saved Messages (Me)",
+                                    recipientId: currentUserId,
+                                    avatarColor: Colors.iosBlue,
+                                });
                             } else {
                                 console.log("Navigate to:", item.route);
                             }
 
                             // Close drawer after navigation
-                            setTimeout(() => {
-                                props.navigation.closeDrawer();
-                            }, 100);
+                            if (item.route !== "Saved") {
+                                setTimeout(() => {
+                                    props.navigation.closeDrawer();
+                                }, 100);
+                            }
                         }}
                         activeOpacity={0.7}
                     >

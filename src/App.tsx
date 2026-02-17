@@ -194,12 +194,19 @@ export default function App() {
     useEffect(() => {
         const loadLockPreference = async (): Promise<void> => {
             try {
-                const preference: string | null = await SecureStore.getItemAsync('lock_enabled');
-                if (preference !== null) {
-                    setLockEnabled(preference === 'true');
+                // Check if passcode is set
+                const passcode = await SecureStore.getItemAsync('app_pin');
+                if (!passcode) {
+                    setLockEnabled(false);
+                    return;
                 }
+
+                // If passcode exists, check if lock is enabled (defaulting to true if not set)
+                const preference: string | null = await SecureStore.getItemAsync('lock_enabled');
+                setLockEnabled(preference !== 'false');
             } catch (error) {
                 console.error('Error loading lock preference:', error);
+                setLockEnabled(false);
             }
         };
 
