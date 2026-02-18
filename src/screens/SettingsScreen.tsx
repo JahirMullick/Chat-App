@@ -157,7 +157,7 @@ export default function SettingsScreen() {
                     icon: "star",
                     label: "My Stars",
                     iconColor: "#FFB800",
-                    onPress: () => navigation.navigate("MyStarScreen" as never),
+                    onPress: () => navigation.navigate("MyStar" as never),
                 },
                 {
                     icon: "briefcase-outline",

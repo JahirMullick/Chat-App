@@ -29,23 +29,23 @@ export type MainStackParamList = {
         username?: string;
     };
     Contacts: undefined;
-};
-QrProfile: {
-    userId ?: string;
-};
-NewChat: undefined;
-NewGroup: undefined;
-CreateGroup: {
-    selectedUsers: string[];
-};
-Test: undefined;
-Profile: undefined;
-Settings: undefined;
-ChatFolders: undefined;
-ChatBackground: undefined;
-Security: undefined;
-Passcode: { mode: "create" | "verify" | "change" | "disable"; onSuccess ?: () => void };
-PasscodeSettings: undefined;
+    QrProfile: {
+        userId?: string;
+    };
+    NewChat: undefined;
+    NewGroup: undefined;
+    CreateGroup: {
+        selectedUsers: string[];
+    };
+    Test: undefined;
+    Profile: undefined;
+    Settings: undefined;
+    ChatFolders: undefined;
+    ChatBackground: undefined;
+    Security: undefined;
+    Passcode: { mode: "create" | "verify" | "change" | "disable"; onSuccess?: () => void };
+    PasscodeSettings: undefined;
+    MyStar: undefined;
 };
 
 // Root Stack Types (combines Auth and Main)
