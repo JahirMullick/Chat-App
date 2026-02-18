@@ -1,4 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import CallsScreen from "../screens/CallsScreen";
 import ChatBackgroundScreen from "../screens/ChatBackgroundScreen";
 import ChatFoldersScreen from "../screens/ChatFoldersScreen";
 import ChatScreen from "../screens/ChatScreen";
@@ -9,6 +10,7 @@ import NewChatScreen from "../screens/NewChatScreen";
 import NewGroupScreen from "../screens/NewGroupScreen";
 import PasscodeScreen from "../screens/PasscodeScreen";
 import PasscodeSettingsScreen from "../screens/PasscodeSettingsScreen";
+import QrProfileScreen from "../screens/QrProfileScreen";
 import SecurityScreen from "../screens/SecurityScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import TestScreen from "../screens/TestScreen";
@@ -31,6 +33,7 @@ export default function MainStack() {
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
             <Stack.Screen name="Contacts" component={ContactsScreen} />
+            <Stack.Screen name="Calls" component={CallsScreen} />
             <Stack.Screen name="MyStar" component={MyStarScreen} />
             <Stack.Screen name="Test" component={TestScreen} />
             <Stack.Screen name="Security" component={SecurityScreen} />
@@ -46,6 +49,7 @@ export default function MainStack() {
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="ChatFolders" component={ChatFoldersScreen} />
             <Stack.Screen name="ChatBackground" component={ChatBackgroundScreen} />
+            <Stack.Screen name="QrProfile" component={QrProfileScreen} />
         </Stack.Navigator>
     );
 }

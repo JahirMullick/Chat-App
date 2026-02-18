@@ -115,6 +115,8 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                             } else if (item.route === "Contacts") {
                                 // Navigate to Contacts screen
                                 props.navigation.getParent()?.navigate("Contacts");
+                            } else if (item.route === "Calls") {
+                                props.navigation.getParent()?.navigate("Calls");
                             } else if (item.route === "Saved") {
                                 // Close drawer first
                                 props.navigation.closeDrawer();

@@ -29,6 +29,7 @@ export type MainStackParamList = {
         username?: string;
     };
     Contacts: undefined;
+    Calls: undefined;
     QrProfile: {
         userId?: string;
     };
