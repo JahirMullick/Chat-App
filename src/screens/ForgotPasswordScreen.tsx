@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { FirebaseAuthTypes, getAuth } from "@react-native-firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
@@ -38,11 +39,37 @@ export default function ForgotPasswordScreen() {
 
         setIsLoading(true);
 
-        // Simulate password reset - replace with your actual logic
-        setTimeout(() => {
-            setIsLoading(false);
+        try {
+            const auth = getAuth();
+            await auth.sendPasswordResetEmail(email.trim());
             setIsEmailSent(true);
-        }, 1500);
+        } catch (error) {
+            let errorMessage = "Failed to send reset email. Please try again.";
+            const firebaseError = error as FirebaseAuthTypes.NativeFirebaseAuthError;
+
+            switch (firebaseError.code) {
+                case "auth/invalid-email":
+                    errorMessage = "Please enter a valid email address.";
+                    break;
+                case "auth/user-not-found":
+                    errorMessage = "No account found with this email address.";
+                    break;
+                case "auth/network-request-failed":
+                    errorMessage = "Network error. Please check your internet connection.";
+                    break;
+                case "auth/too-many-requests":
+                    errorMessage = "Too many attempts. Please try again later.";
+                    break;
+                default:
+                    if (firebaseError?.message) {
+                        errorMessage = firebaseError.message;
+                    }
+            }
+
+            Alert.alert("Reset Failed", errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleBackToLogin = () => {
@@ -72,10 +99,7 @@ export default function ForgotPasswordScreen() {
                     {/* Resend Button */}
                     <TouchableOpacity
                         style={styles.resendButton}
-                        onPress={() => {
-                            setIsEmailSent(false);
-                            handleResetPassword();
-                        }}
+                        onPress={handleResetPassword}
                     >
                         <Text style={styles.resendButtonText}>Resend Email</Text>
                     </TouchableOpacity>
