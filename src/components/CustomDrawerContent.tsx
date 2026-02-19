@@ -121,8 +121,9 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                                 // Close drawer first
                                 props.navigation.closeDrawer();
                                 // Navigate to Chat screen for Saved Messages
+                                const savedMessagesId = currentUserId ? `saved_messages_${currentUserId}` : "saved_messages";
                                 props.navigation.getParent()?.navigate("Chat", {
-                                    chatId: "saved_messages",
+                                    chatId: savedMessagesId,
                                     name: "Saved Messages (Me)",
                                     recipientId: currentUserId,
                                     avatarColor: Colors.iosBlue,

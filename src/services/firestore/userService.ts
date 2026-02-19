@@ -147,6 +147,30 @@ export const UserService = {
     },
 
     /**
+     * Check if a phone number is already in use by another user
+     */
+    checkPhoneNumberExists: async (phoneNumber: string, excludeUserId?: string): Promise<boolean> => {
+        try {
+            let query = UserService.getCollection().where("phoneNumber", "==", phoneNumber);
+            const snapshot = await query.get();
+
+            if (snapshot.empty) {
+                return false;
+            }
+
+            // If excludeUserId is provided, check if the found user is NOT the current user
+            if (excludeUserId) {
+                return snapshot.docs.some(doc => doc.id !== excludeUserId);
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error checking phone number:", error);
+            throw error;
+        }
+    },
+
+    /**
      * Update user profile fields
      */
     updateProfile: async (

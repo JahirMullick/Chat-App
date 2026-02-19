@@ -199,7 +199,7 @@ function HomeScreen() {
         const hasSavedMessages = mappedChats.some(chat => chat.isSavedMessages);
         if (!hasSavedMessages && currentUserId) {
             mappedChats.unshift({
-                id: "saved_messages", // Virtual ID initially, will create on first use
+                id: `saved_messages_${currentUserId}`, // Virtual ID initially, will create on first use
                 name: "Saved Messages (Me)",
                 message: "Save messages here",
                 time: "",
