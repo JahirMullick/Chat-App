@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import Colors from "../constants/colors";
 
@@ -23,7 +22,8 @@ export default function CallsScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        // <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.container} >
             <Header
                 title="Calls"
                 showSearch={false}
@@ -39,7 +39,7 @@ export default function CallsScreen() {
                     renderItem={({ item }) => <Text>Call Log Item</Text>}
                 />
             )}
-        </SafeAreaView>
+        </View>
     );
 }
 

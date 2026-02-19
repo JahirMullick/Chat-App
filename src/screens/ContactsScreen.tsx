@@ -14,7 +14,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import Colors from "../constants/colors";
 import { MainStackParamList } from "../Navigation/types";
@@ -103,7 +102,8 @@ export default function ContactsScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+
+        <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
             <Header
                 title="Contacts"
@@ -149,7 +149,8 @@ export default function ContactsScreen() {
                     }
                 />
             )}
-        </SafeAreaView>
+        </View>
+
     );
 }
 
