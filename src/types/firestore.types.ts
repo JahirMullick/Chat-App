@@ -121,6 +121,9 @@ export interface UserChat {
     isHidden: boolean; // Hide chat until recipient sends first message
     lastReadAt: FirebaseFirestoreTypes.Timestamp | null;
     joinedAt: FirebaseFirestoreTypes.Timestamp;
+    lastMessageOverride?: string | null; // Text of the last message locally for this user
+    lastMessageTypeOverride?: MessageType | null; // Type of the last message locally
+    lastMessageTimeOverride?: FirebaseFirestoreTypes.Timestamp | null; // Time of the last message locally
 }
 
 /**

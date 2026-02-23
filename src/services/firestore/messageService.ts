@@ -1,5 +1,5 @@
 import firestore, { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { Message, MessageStatus } from "../../types/firestore.types";
+import { Message, MessageStatus, MessageType } from "../../types/firestore.types";
 import { ChatService } from "./chatService";
 
 const CHATS_COLLECTION = "chats";
@@ -90,7 +90,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //             try {
 //                 const chatDoc = await firestore().collection(CHATS_COLLECTION).doc(chatId).get();
 //                 const chatData = chatDoc.data();
-                
+
 //                 if (chatData?.participants) {
 //                     await NotificationService.sendChatNotification(
 //                         chatId,
@@ -132,7 +132,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //             }
 
 //             const snapshot = await query.get();
-            
+
 //             return snapshot.docs.map(doc => ({
 //                 id: doc.id,
 //                 ...doc.data(),
@@ -204,7 +204,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //             if (snapshot.empty) return;
 
 //             const batch = firestore().batch();
-            
+
 //             snapshot.docs.forEach(doc => {
 //                 const message = doc.data();
 //                 if (!message.readBy?.includes(userId)) {
@@ -215,7 +215,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //             });
 
 //             await batch.commit();
-            
+
 //             // Also update chat's unread count
 //             await ChatService.markChatAsRead(userId, chatId);
 //         } catch (error) {
@@ -296,7 +296,7 @@ const MESSAGES_SUBCOLLECTION = "messages";
 //     deleteAllMessages: async (chatId: string): Promise<void> => {
 //         try {
 //             const snapshot = await MessageService.getCollection(chatId).get();
-            
+
 //             if (snapshot.empty) return;
 
 //             // Delete in batches of 500 (Firestore limit)
@@ -421,17 +421,18 @@ export const MessageService = {
 
             // ✅ FIX: Get receiverId from options or fetch from chat participants
             let receiverId = options?.receiverId;
+            let participants: string[] = [];
 
-            if (!receiverId) {
-                // Fetch receiverId from chat participants if not provided
-                const chatDoc = await firestore()
-                    .collection(CHATS_COLLECTION)
-                    .doc(chatId)
-                    .get();
-                
-                if (chatDoc.exists) {
-                    const chatData = chatDoc.data();
-                    const participants = chatData?.participants || [];
+            // Always fetch the chat doc so we have participants for later operations
+            const chatDoc = await firestore()
+                .collection(CHATS_COLLECTION)
+                .doc(chatId)
+                .get();
+
+            const chatData = chatDoc.data();
+            if (chatData) {
+                participants = chatData?.participants || [];
+                if (!receiverId) {
                     // Find the other participant (not the sender)
                     receiverId = participants.find((id: string) => id !== senderId);
                 }
@@ -468,10 +469,16 @@ export const MessageService = {
             const messageRef = await MessageService.getCollection(chatId).add(messageData);
             console.log("✅ Message added to Firestore:", messageRef.id);
 
+            // Clear any local overrides for all participants so this new message is displayed
+            if (participants.length > 0) {
+                await ChatService.clearLastMessageOverrides(chatId, participants);
+                console.log("✅ Cleared lastMessage overrides");
+            }
+
             // Update chat's last message (pass media type if present)
             await ChatService.updateLastMessage(
-                chatId, 
-                text, 
+                chatId,
+                text,
                 senderId,
                 options?.mediaType || "text"
             );
@@ -518,7 +525,7 @@ export const MessageService = {
     },
 
     // ... rest of your methods stay the same
-    
+
     /**
      * Get messages for a chat (paginated)
      */
@@ -537,7 +544,7 @@ export const MessageService = {
             }
 
             const snapshot = await query.get();
-            
+
             return snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -608,7 +615,7 @@ export const MessageService = {
             if (snapshot.empty) return;
 
             const batch = firestore().batch();
-            
+
             snapshot.docs.forEach(doc => {
                 const message = doc.data();
                 if (!message.readBy?.includes(userId)) {
@@ -665,12 +672,57 @@ export const MessageService = {
     },
 
     /**
+     * Recalculates and updates the global last message for a chat after a message is deleted
+     */
+    updateLastMessageAfterDeletion: async (chatId: string): Promise<void> => {
+        try {
+            // Get the most recent message that hasn't been deleted globally
+            const snapshot = await MessageService.getCollection(chatId)
+                .orderBy("timestamp", "desc")
+                .limit(1)
+                .get();
+
+            let lastMessageText = "";
+            let lastMessageSenderId = "";
+            let lastMessageType: MessageType | undefined = undefined;
+            const now = firestore.FieldValue.serverTimestamp();
+
+            if (!snapshot.empty) {
+                const lastMessageData = snapshot.docs[0].data();
+                lastMessageText = lastMessageData.text || "";
+                lastMessageSenderId = lastMessageData.senderId || "";
+                lastMessageType = lastMessageData.mediaType;
+
+                await ChatService.getDocRef(chatId).update({
+                    lastMessage: lastMessageText,
+                    lastMessageSenderId: lastMessageSenderId,
+                    lastMessageType: lastMessageType || firestore.FieldValue.delete(),
+                    updatedAt: now,
+                });
+            } else {
+                // Chat is completely empty now
+                await ChatService.getDocRef(chatId).update({
+                    lastMessage: "",
+                    lastMessageSenderId: "",
+                    lastMessageType: firestore.FieldValue.delete(),
+                    updatedAt: now,
+                });
+            }
+        } catch (error) {
+            console.error("Error updating last message after deletion:", error);
+        }
+    },
+
+    /**
      * Delete message (hard delete - removes for everyone)
      */
     deleteMessage: async (chatId: string, messageId: string): Promise<void> => {
         try {
             await MessageService.getDocRef(chatId, messageId).delete();
             console.log("Message deleted:", messageId);
+
+            // Recalculate global last message
+            await MessageService.updateLastMessageAfterDeletion(chatId);
         } catch (error) {
             console.error("Error deleting message:", error);
             throw error;
@@ -686,6 +738,36 @@ export const MessageService = {
                 deletedFor: firestore.FieldValue.arrayUnion(userId),
             });
             console.log("Message deleted for user:", userId);
+
+            // Fetch the latest message that this user hasn't deleted to act as their local override
+            const snapshot = await MessageService.getCollection(chatId)
+                .orderBy("timestamp", "desc")
+                .get();
+
+            let lastValidMessageForUser = null;
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                if (!data.deletedFor?.includes(userId)) {
+                    lastValidMessageForUser = data;
+                    break;
+                }
+            }
+
+            const userChatRef = ChatService.getUserChatsCollection(userId).doc(chatId);
+            if (lastValidMessageForUser) {
+                await userChatRef.update({
+                    lastMessageOverride: lastValidMessageForUser.text || "",
+                    lastMessageTypeOverride: lastValidMessageForUser.mediaType || firestore.FieldValue.delete(),
+                    lastMessageTimeOverride: lastValidMessageForUser.timestamp || firestore.FieldValue.serverTimestamp(),
+                });
+            } else {
+                await userChatRef.update({
+                    lastMessageOverride: "",
+                    lastMessageTypeOverride: firestore.FieldValue.delete(),
+                    lastMessageTimeOverride: firestore.FieldValue.serverTimestamp(),
+                });
+            }
+
         } catch (error) {
             console.error("Error deleting message for user:", error);
             throw error;
@@ -698,7 +780,7 @@ export const MessageService = {
     deleteAllMessages: async (chatId: string): Promise<void> => {
         try {
             const snapshot = await MessageService.getCollection(chatId).get();
-            
+
             if (snapshot.empty) return;
 
             const batchSize = 500;

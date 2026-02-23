@@ -144,14 +144,19 @@ function HomeScreen() {
                 ? chat.participantDetails[otherParticipantId]
                 : null;
 
+            // Determine active last message fields (fallback to global chat fields if userChat overrides are undefined)
+            const effectiveLastMessageType = (userChat.lastMessageTypeOverride !== undefined ? userChat.lastMessageTypeOverride : chat.lastMessageType) || undefined;
+            const effectiveLastMessage = userChat.lastMessageOverride !== undefined ? userChat.lastMessageOverride : chat.lastMessage;
+            const effectiveLastMessageTime = userChat.lastMessageTimeOverride !== undefined ? userChat.lastMessageTimeOverride : chat.lastMessageTime;
+
             // Handle Saved Messages (Chat with self)
             if (!otherParticipantId && chat.participants.includes(currentUserId || "")) {
                 return {
                     id: chat.id,
                     name: "Saved Messages",
-                    message: getMessagePreview(chat.lastMessageType, chat.lastMessage || "Save messages here"),
-                    time: chat.lastMessageTime
-                        ? formatTime(chat.lastMessageTime.toDate())
+                    message: getMessagePreview(effectiveLastMessageType, effectiveLastMessage || "Save messages here"),
+                    time: effectiveLastMessageTime
+                        ? formatTime(effectiveLastMessageTime.toDate())
                         : "",
                     unreadCount: userChat.unreadCount > 0 ? userChat.unreadCount : undefined,
                     isMuted: userChat.isMuted,
@@ -180,9 +185,9 @@ function HomeScreen() {
                 name: chat.type === "group"
                     ? chat.name || "Unnamed Group"
                     : otherParticipant?.displayName || "Unknown",
-                message: getMessagePreview(chat.lastMessageType, chat.lastMessage || "No messages yet"),
-                time: chat.lastMessageTime
-                    ? formatTime(chat.lastMessageTime.toDate())
+                message: getMessagePreview(effectiveLastMessageType, effectiveLastMessage || "No messages yet"),
+                time: effectiveLastMessageTime
+                    ? formatTime(effectiveLastMessageTime.toDate())
                     : "",
                 unreadCount: userChat.unreadCount > 0 ? userChat.unreadCount : undefined,
                 isMuted: userChat.isMuted,

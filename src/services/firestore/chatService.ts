@@ -83,7 +83,7 @@ export const ChatService = {
             // Create userChat entries for both users
             console.log(`Creating userChat entries for participants:`, participants);
             const batch = firestore().batch();
-            
+
             for (const userId of participants) {
                 const userChatRef = ChatService.getUserChatsCollection(userId).doc(chatRef.id);
                 const isHidden = userId !== currentUserId;
@@ -126,11 +126,11 @@ export const ChatService = {
     ): Promise<string> => {
         try {
             const allMembers = [...new Set([creatorId, ...memberIds])]; // Ensure unique members
-            
+
             // Get all members' details
             const users = await UserService.getUsersByIds(allMembers);
             const participantDetails: { [userId: string]: ParticipantInfo } = {};
-            
+
             users.forEach(user => {
                 participantDetails[user.uid] = {
                     displayName: user.displayName,
@@ -161,7 +161,7 @@ export const ChatService = {
 
             // Create userChat entries for all members
             const batch = firestore().batch();
-            
+
             for (const userId of allMembers) {
                 const userChatRef = ChatService.getUserChatsCollection(userId).doc(chatRef.id);
                 batch.set(userChatRef, {
@@ -190,7 +190,7 @@ export const ChatService = {
     findIndividualChat: async (userId1: string, userId2: string): Promise<Chat | null> => {
         try {
             const participants = [userId1, userId2].sort();
-            
+
             const snapshot = await ChatService.getCollection()
                 .where("type", "==", "individual")
                 .where("participants", "==", participants)
@@ -241,7 +241,7 @@ export const ChatService = {
             for (const userChatDoc of userChatsSnapshot.docs) {
                 const userChat = userChatDoc.data() as UserChat;
                 const chat = await ChatService.getChatById(userChat.chatId);
-                
+
                 if (chat) {
                     results.push({ chat, userChat });
                 }
@@ -278,14 +278,14 @@ export const ChatService = {
 
                         for (const doc of snapshot.docs) {
                             const userChat = doc.data() as UserChat;
-                            
+
                             // Skip hidden chats (chats where user hasn't sent message yet)
                             if (userChat.isHidden) {
                                 continue;
                             }
-                            
+
                             const chat = await ChatService.getChatById(userChat.chatId);
-                            
+
                             if (chat) {
                                 results.push({ chat, userChat });
                             }
@@ -344,6 +344,32 @@ export const ChatService = {
     },
 
     /**
+     * Clear all last message overrides for a chat (called when a new message is sent)
+     */
+    clearLastMessageOverrides: async (
+        chatId: string,
+        participantIds: string[]
+    ): Promise<void> => {
+        try {
+            const batch = firestore().batch();
+
+            for (const participantId of participantIds) {
+                const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
+                batch.update(userChatRef, {
+                    lastMessageOverride: firestore.FieldValue.delete(),
+                    lastMessageTypeOverride: firestore.FieldValue.delete(),
+                    lastMessageTimeOverride: firestore.FieldValue.delete(),
+                });
+            }
+
+            await batch.commit();
+        } catch (error) {
+            console.error("Error clearing last message overrides:", error);
+            // Don't throw, failing to clear overrides shouldn't fail message sending
+        }
+    },
+
+    /**
      * Increment unread count for all participants except sender
      */
     incrementUnreadCounts: async (chatId: string, senderId: string): Promise<void> => {
@@ -352,7 +378,7 @@ export const ChatService = {
             if (!chat) return;
 
             const batch = firestore().batch();
-            
+
             for (const participantId of chat.participants) {
                 if (participantId !== senderId) {
                     const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
@@ -540,7 +566,7 @@ export const ChatService = {
             await batch.commit();
 
             // Delete all messages (in background, don't wait)
-            MessageService.deleteAllMessages(chatId).catch((err: Error) => 
+            MessageService.deleteAllMessages(chatId).catch((err: Error) =>
                 console.error("Error deleting messages:", err)
             );
 
@@ -557,7 +583,7 @@ export const ChatService = {
     unhideChat: async (userId: string, chatId: string): Promise<void> => {
         try {
             console.log(`🔓 Starting unhideChat for chatId: ${chatId}`);
-            
+
             // Get chat to find all participants
             const chat = await ChatService.getChatById(chatId);
             if (!chat) {
@@ -571,24 +597,24 @@ export const ChatService = {
             const unhidePromises = chat.participants.map(async (participantId) => {
                 try {
                     const userChatRef = ChatService.getUserChatsCollection(participantId).doc(chatId);
-                    
+
                     // Get current document
                     const userChatDoc = await userChatRef.get();
-                    
+
                     if (userChatDoc.exists()) {
                         const currentData = userChatDoc.data();
                         console.log(`📄 Current data for ${participantId}:`, {
                             isHidden: currentData?.isHidden,
                             chatId: currentData?.chatId
                         });
-                        
+
                         // Use set with merge to ensure it works even if fields are missing
                         await userChatRef.set({
                             isHidden: false,
                         }, { merge: true });
-                        
+
                         console.log(`✅ Chat unhidden for participant: ${participantId}`);
-                        
+
                         // Verify the update
                         const verifyDoc = await userChatRef.get();
                         const verifyData = verifyDoc.data();
