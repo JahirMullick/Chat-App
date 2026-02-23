@@ -136,7 +136,7 @@ import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import LockScreen from "./components/LockScreen";
@@ -310,15 +310,17 @@ export default function App() {
         return <NoInternetScreen onRefresh={handleManualRefresh} />;
     }
 
-    // <--- SHOW LOCK SCREEN IF LOCKED AND USER IS AUTHENTICATED --->
-    if (isLocked && lockEnabled && isAuthenticated) {
-        return <LockScreen onUnlock={handleUnlock} />;
-    }
-
     return (
         <SafeAreaProvider>
             <KeyboardProvider>
                 <AppNavigator ref={navigationRef} />
+
+                {/* Overlay LockScreen on top to preserve navigation state underneath */}
+                {isLocked && lockEnabled && isAuthenticated && (
+                    <View style={StyleSheet.absoluteFill}>
+                        <LockScreen onUnlock={handleUnlock} />
+                    </View>
+                )}
             </KeyboardProvider>
         </SafeAreaProvider>
     );

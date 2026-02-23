@@ -112,7 +112,7 @@ export default function PasscodeSettingsScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={Colors.black} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Passcode Lock</Text>
+                <Text style={styles.headerTitle}>Passcode Settings</Text>
                 <View style={{ width: 40 }} />
             </View>
 
