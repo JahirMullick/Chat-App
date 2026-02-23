@@ -24,7 +24,7 @@ const MAX_ATTEMPTS: number = 5;
 const LOCKOUT_DURATION: number = 30000; // 30 seconds
 const PIN_LENGTH: number = 4;
 
-const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
+const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, customTitle, customSubtitle }) => {
     // State
     const [pin, setPin] = useState<string>('');
     const [savedPin, setSavedPin] = useState<string | null>(null);
@@ -171,7 +171,6 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
                     promptMessage: 'Authenticate to unlock',
                     fallbackLabel: 'Use PIN',
                     cancelLabel: 'Cancel',
-                    disableDeviceCredentials: true,
                 });
 
             if (result.success) {
@@ -276,7 +275,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
         if (isSettingPin) {
             return isConfirming ? 'Confirm Your PIN' : 'Create a PIN';
         }
-        return 'Enter PIN to Unlock';
+        return customTitle || 'Enter PIN to Unlock';
     };
 
     // Get subtitle text
@@ -289,7 +288,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
                 ? 'Re-enter your PIN to confirm'
                 : 'Set a 4-digit PIN for security';
         }
-        return 'Enter your PIN or use biometrics';
+        return customSubtitle || 'Enter your PIN or use biometrics';
     };
 
     // Render PIN dots

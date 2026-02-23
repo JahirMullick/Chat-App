@@ -14,7 +14,7 @@ export default function PasscodeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
     const route = useRoute<PasscodeScreenRouteProp>();
     const insets = useSafeAreaInsets();
-    const { mode, onSuccess } = route.params || { mode: "verify" };
+    const { mode, onSuccess, customTitle, customSubtitle } = route.params || { mode: "verify" };
 
     const handleUnlock = async () => {
         if (mode === "create") {
@@ -41,7 +41,11 @@ export default function PasscodeScreen() {
                 </TouchableOpacity>
             </View>
             <View style={styles.content}>
-                <LockScreen onUnlock={handleUnlock} />
+                <LockScreen
+                    onUnlock={handleUnlock}
+                    customTitle={customTitle}
+                    customSubtitle={customSubtitle}
+                />
             </View>
         </View>
     );

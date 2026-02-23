@@ -19,8 +19,12 @@ import { MainStackParamList } from "../Navigation/types";
 import { BackgroundStorage } from "../utils/storage";
 
 const { width } = Dimensions.get("window");
-const ITEM_WIDTH = (width + 65) / 4;
-// const ITEM_WIDTH = (width - 48) / 3; // 3 columns with padding
+
+// Calculate 3 columns:
+// Container padding: 16 (left) + 16 (right) = 32
+// Gaps between 3 items: 12 (gap) * 2 = 24
+// Total spacing = 56. We subtract a bit more to be completely safe against pixel rounding errors on Android.
+const ITEM_WIDTH = Math.floor((width - 58) / 3);
 
 // Background images from assets/Backgrounds
 const BACKGROUNDS = [

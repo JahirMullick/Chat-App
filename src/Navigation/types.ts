@@ -44,7 +44,7 @@ export type MainStackParamList = {
     ChatFolders: undefined;
     ChatBackground: undefined;
     Security: undefined;
-    Passcode: { mode: "create" | "verify" | "change" | "disable"; onSuccess?: () => void };
+    Passcode: { mode: "create" | "verify" | "change" | "disable"; onSuccess?: () => void; customTitle?: string; customSubtitle?: string; };
     PasscodeSettings: undefined;
     MyStar: undefined;
 };

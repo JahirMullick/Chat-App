@@ -2,6 +2,8 @@
 
 export interface LockScreenProps {
   onUnlock: () => void;
+  customTitle?: string;
+  customSubtitle?: string;
 }
 
 export type BiometricType = 'fingerprint' | 'face' | null;

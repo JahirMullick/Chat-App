@@ -5,6 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 import React, { useEffect, useState } from "react";
 import {
     Alert,
+    Modal,
     ScrollView,
     StyleSheet,
     Switch,
@@ -23,6 +24,9 @@ export default function PasscodeSettingsScreen() {
     const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(false);
     const [autoLock, setAutoLock] = useState("in 1 minute");
     const [showInTaskSwitcher, setShowInTaskSwitcher] = useState(true);
+    const [isAutoLockModalVisible, setIsAutoLockModalVisible] = useState(false);
+
+    const AUTO_LOCK_OPTIONS = ["immediately", "in 1 minute", "in 5 minutes", "in 1 hour"];
 
     // Load initial settings
     useEffect(() => {
@@ -43,37 +47,24 @@ export default function PasscodeSettingsScreen() {
     };
 
     const handleAutoLockPress = () => {
-        // Simple cycle for now or show options
-        const options = ["immediately", "in 1 minute", "in 5 minutes", "in 1 hour", "in 5 hours"];
-        const currentIndex = options.indexOf(autoLock);
-        const nextIndex = (currentIndex + 1) % options.length;
-        const nextValue = options[nextIndex];
+        setIsAutoLockModalVisible(true);
+    };
 
-        setAutoLock(nextValue);
-        SecurityStorage.setAutoLock(nextValue);
+    const handleSelectAutoLock = (option: string) => {
+        setAutoLock(option);
+        SecurityStorage.setAutoLock(option);
+        setIsAutoLockModalVisible(false);
     };
 
     const handleChangePasscode = async () => {
-        // First verify old passcode, then create new one.
-        // LockScreen component logic is a bit complex, it handles creation if "app_pin" is missing.
-        // To "Change", we should:
-        // 1. Verify current PIN (Unlock)
-        // 2. Clear current PIN (so LockScreen goes into creation mode)
-        // 3. Show LockScreen again (to Set new PIN)
-
+        // User already verified their identity to enter this screen.
+        // We can safely clear the PIN and jump straight to Create mode.
+        await SecureStore.deleteItemAsync("app_pin");
         navigation.navigate("Passcode", {
-            mode: "verify",
+            mode: "create",
             onSuccess: async () => {
-                // Pin Verified. Now clear it to trigger "Create" mode
-                await SecureStore.deleteItemAsync("app_pin");
-                // Navigate to Create mode
-                navigation.replace("Passcode", {
-                    mode: "create",
-                    onSuccess: async () => {
-                        await SecureStore.setItemAsync("lock_enabled", "true");
-                        navigation.goBack();
-                    }
-                });
+                await SecureStore.setItemAsync("lock_enabled", "true");
+                navigation.goBack();
             }
         });
     };
@@ -87,18 +78,11 @@ export default function PasscodeSettingsScreen() {
                 {
                     text: "Turn Off",
                     style: "destructive",
-                    onPress: () => {
-                        // Verify before disabling
-                        navigation.navigate("Passcode", {
-                            mode: "verify", // Verify first
-                            onSuccess: async () => {
-                                // After successful verification, disable lock
-                                await SecureStore.deleteItemAsync("app_pin");
-                                await SecureStore.setItemAsync("lock_enabled", "false");
-                                // After successful disable, go back to Security screen
-                                navigation.pop(2); // Pop PasscodeSettings and Passcode(verify) screens
-                            }
-                        });
+                    onPress: async () => {
+                        // User already verified to enter this screen, so we can disable it directly.
+                        await SecureStore.deleteItemAsync("app_pin");
+                        await SecureStore.setItemAsync("lock_enabled", "false");
+                        navigation.goBack(); // Back to Security screen
                     },
                 },
             ]
@@ -139,7 +123,7 @@ export default function PasscodeSettingsScreen() {
                         <Text style={styles.settingLabel}>Change Passcode</Text>
                     </TouchableOpacity>
 
-                    <View style={styles.settingItem}>
+                    {/* <View style={styles.settingItem}>
                         <Text style={styles.settingLabel}>Unlock with Fingerprint</Text>
                         <Switch
                             value={isFingerprintEnabled}
@@ -147,7 +131,7 @@ export default function PasscodeSettingsScreen() {
                             trackColor={{ false: "#767577", true: Colors.primaryLight }}
                             thumbColor={isFingerprintEnabled ? Colors.primary : "#f4f3f4"}
                         />
-                    </View>
+                    </View> */}
 
                     <TouchableOpacity style={[styles.settingItem, styles.lastItem]} onPress={handleAutoLockPress}>
                         <Text style={styles.settingLabel}>Auto-lock</Text>
@@ -187,6 +171,46 @@ export default function PasscodeSettingsScreen() {
                 </TouchableOpacity>
 
             </ScrollView>
+
+            {/* Auto-Lock Modal */}
+            <Modal
+                transparent={true}
+                visible={isAutoLockModalVisible}
+                animationType="fade"
+                onRequestClose={() => setIsAutoLockModalVisible(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setIsAutoLockModalVisible(false)}
+                >
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Auto-lock</Text>
+                        </View>
+                        {AUTO_LOCK_OPTIONS.map((option, index) => (
+                            <TouchableOpacity
+                                key={option}
+                                style={[
+                                    styles.modalOption,
+                                    index === AUTO_LOCK_OPTIONS.length - 1 && styles.lastModalOption
+                                ]}
+                                onPress={() => handleSelectAutoLock(option)}
+                            >
+                                <Text style={[
+                                    styles.modalOptionText,
+                                    autoLock === option && styles.modalOptionTextActive
+                                ]}>
+                                    {option}
+                                </Text>
+                                {autoLock === option && (
+                                    <Ionicons name="checkmark" size={24} color={Colors.primary} />
+                                )}
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 }
@@ -305,6 +329,49 @@ const styles = StyleSheet.create({
     turnOffText: {
         fontSize: 16,
         color: "#FF3B30", // Red color
+        fontWeight: "500",
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        justifyContent: "flex-end",
+    },
+    modalContent: {
+        backgroundColor: Colors.white,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingBottom: 40,
+        paddingTop: 10,
+    },
+    modalHeader: {
+        alignItems: "center",
+        paddingVertical: 15,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: Colors.border,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: Colors.black,
+    },
+    modalOption: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: Colors.border,
+    },
+    lastModalOption: {
+        borderBottomWidth: 0,
+    },
+    modalOptionText: {
+        fontSize: 16,
+        color: Colors.black,
+    },
+    modalOptionTextActive: {
+        color: Colors.primary,
         fontWeight: "500",
     },
 });

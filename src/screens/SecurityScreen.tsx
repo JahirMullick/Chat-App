@@ -32,7 +32,7 @@ export default function SecurityScreen() {
             // Verify passcode before opening settings
             navigation.navigate("Passcode", {
                 mode: "verify",
-                onSuccess: () => navigation.navigate("PasscodeSettings"),
+                onSuccess: () => navigation.replace("PasscodeSettings"),
             });
         } else {
             // Create new passcode
