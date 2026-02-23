@@ -26,6 +26,7 @@ export default function ContactsScreen() {
     const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const auth = getAuth();
     const currentUser = auth.currentUser;
@@ -34,8 +35,11 @@ export default function ContactsScreen() {
         loadContacts();
     }, []);
 
-    const loadContacts = async () => {
-        setIsLoading(true);
+    const loadContacts = async (showLoader = true) => {
+        if (showLoader) {
+            setIsLoading(true);
+        }
+
         try {
             // In a real app, this might fetch friends/contacts. 
             // For now, we fetch all users except current user.
@@ -45,8 +49,16 @@ export default function ContactsScreen() {
         } catch (error) {
             console.error("Error loading contacts:", error);
         } finally {
-            setIsLoading(false);
+            if (showLoader) {
+                setIsLoading(false);
+            }
         }
+    };
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await loadContacts(false);
+        setIsRefreshing(false);
     };
 
     const handleSearch = (text: string) => {
@@ -141,6 +153,8 @@ export default function ContactsScreen() {
                     data={filteredUsers}
                     keyExtractor={(item) => item.uid}
                     renderItem={renderItem}
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
                     contentContainerStyle={styles.listContent}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>

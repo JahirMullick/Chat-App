@@ -42,15 +42,6 @@ export default {
         },
         plugins: [
             [
-                "expo-splash-screen",
-                {
-                    image: "./assets/images/Logo.png", // Use the main logo
-                    imageWidth: 120, // Match your custom splash (120x120)
-                    resizeMode: "contain",
-                    backgroundColor: "#ffffff", // White background like custom splash
-                },
-            ],
-            [
                 "expo-notifications",
                 {
                     icon: "./assets/images/notification-icon.png",
