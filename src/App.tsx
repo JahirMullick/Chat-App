@@ -128,17 +128,15 @@
 // V2 (Implement Lock Screen):
 // App.tsx
 
-import { Ionicons } from "@expo/vector-icons";
 import NetInfo from "@react-native-community/netinfo";
 import { getAuth } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { NavigationContainerRef } from "@react-navigation/native";
-import { BlurView } from "expo-blur";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, AppStateStatus, StyleSheet, Text, View } from "react-native";
+import { AppState, AppStateStatus, StyleSheet, View } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import LockScreen from "./components/LockScreen";
@@ -167,7 +165,6 @@ export default function App() {
     const [isLocked, setIsLocked] = useState<boolean>(true);
     const [lockEnabled, setLockEnabled] = useState<boolean>(true);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [showPrivacyOverlay, setShowPrivacyOverlay] = useState<boolean>(false);
 
     // Network listener
     useEffect(() => {
@@ -223,13 +220,6 @@ export default function App() {
                     if (lockEnabled && isAuthenticated) {
                         setIsLocked(true);
                     }
-                }
-
-                // Privacy Overlay for App Switcher
-                if (nextAppState === 'inactive' || nextAppState === 'background') {
-                    setShowPrivacyOverlay(true);
-                } else if (nextAppState === 'active') {
-                    setShowPrivacyOverlay(false);
                 }
 
                 appState.current = nextAppState;
@@ -331,18 +321,6 @@ export default function App() {
                     <View style={StyleSheet.absoluteFill}>
                         <LockScreen onUnlock={handleUnlock} />
                     </View>
-                )}
-
-                {/* Privacy Overlay to hide content when app is in background/app switcher */}
-                {showPrivacyOverlay && (
-                    <BlurView
-                        intensity={100}
-                        tint="light"
-                        style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', zIndex: 1000 }]}
-                    >
-                        <Ionicons name="shield-checkmark" size={80} color="#4A90D9" />
-                        <Text style={{ marginTop: 20, fontSize: 18, fontWeight: '600', color: '#333' }}>Secure Chat App</Text>
-                    </BlurView>
                 )}
             </KeyboardProvider>
         </SafeAreaProvider>
