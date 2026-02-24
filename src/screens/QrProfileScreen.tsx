@@ -1,19 +1,24 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useMemo, useState } from "react";
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
     Alert,
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View,
 } from "react-native";
 import QRCodeStyled from 'react-native-qrcode-styled';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ViewShot from "react-native-view-shot";
 import Colors from "../constants/colors";
 import { useCurrentUserId, useUserProfile } from "../Hooks/useFirestore";
 
@@ -25,6 +30,7 @@ export default function QrProfileScreen() {
     const insets = useSafeAreaInsets();
     const currentUserId = useCurrentUserId();
     const [selectedThemeIndex, setSelectedThemeIndex] = useState(0);
+    const viewShotRef = useRef<ViewShot>(null);
 
     // Get userId from route params, fallback to current user
     const params = route.params as { userId?: string } | undefined;
@@ -51,9 +57,61 @@ export default function QrProfileScreen() {
         navigation.goBack();
     }, [navigation]);
 
-    const handleShare = useCallback(() => {
-        Alert.alert("Share", "QR Code sharing feature coming soon!");
-    }, []);
+    const handleShare = async () => {
+        try {
+            if (viewShotRef.current && viewShotRef.current.capture) {
+                const uri = await viewShotRef.current.capture();
+                const isAvailable = await Sharing.isAvailableAsync();
+                if (isAvailable) {
+                    await Sharing.shareAsync(uri);
+                } else {
+                    if (Platform.OS === 'android') {
+                        ToastAndroid.show("Sharing isn't available", ToastAndroid.SHORT);
+                    } else {
+                        Alert.alert("Sharing isn't available on your platform");
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error sharing QR code:", error);
+            if (Platform.OS === 'android') {
+                ToastAndroid.show("Could not share QR code", ToastAndroid.SHORT);
+            } else {
+                Alert.alert("Error", "Could not share the QR code.");
+            }
+        }
+    };
+
+    const handleDownload = async () => {
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("Permission required to save", ToastAndroid.SHORT);
+                } else {
+                    Alert.alert("Permission Required", "We need permission to save the QR code to your gallery.");
+                }
+                return;
+            }
+
+            if (viewShotRef.current && viewShotRef.current.capture) {
+                const uri = await viewShotRef.current.capture();
+                await MediaLibrary.saveToLibraryAsync(uri);
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("Saved to gallery!", ToastAndroid.SHORT);
+                } else {
+                    Alert.alert("Success", "QR Code has been saved to your gallery!");
+                }
+            }
+        } catch (error) {
+            console.error("Error saving QR code:", error);
+            if (Platform.OS === 'android') {
+                ToastAndroid.show("Could not save QR code", ToastAndroid.SHORT);
+            } else {
+                Alert.alert("Error", "Could not save the QR code.");
+            }
+        }
+    };
 
     const themes = ["🏠", "🐥", "⛄", "💎", "🤓"];
 
@@ -115,7 +173,7 @@ export default function QrProfileScreen() {
 
                 {/* Main QR Card */}
                 <View style={styles.centerContainer}>
-                    <View style={styles.qrCard}>
+                    <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }} style={styles.qrCard}>
                         {/* Avatar */}
                         {userData.avatar ? (
                             <Image
@@ -150,7 +208,7 @@ export default function QrProfileScreen() {
                         {/* Username */}
                         <Text style={styles.username}>@{userData.username}</Text>
                         {/* <Text style={styles.userIdText}>{userData.userId}</Text> */}
-                    </View>
+                    </ViewShot>
                 </View>
 
                 {/* QR Info Section */}
@@ -192,7 +250,7 @@ export default function QrProfileScreen() {
                         <Text style={styles.shareButtonText}>Share QR Code</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.downloadButton}>
+                    <TouchableOpacity style={styles.downloadButton} onPress={handleDownload}>
                         <MaterialCommunityIcons name="download" size={20} color={Colors.primary} />
                         <Text style={styles.downloadButtonText}>Download</Text>
                     </TouchableOpacity>

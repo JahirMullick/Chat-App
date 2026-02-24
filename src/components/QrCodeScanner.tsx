@@ -4,7 +4,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import LottieView from 'lottie-react-native';
 import React, { useState } from 'react';
 import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BlankSpace } from './BlankSpace';
 
 const { width, height } = Dimensions.get('window');
 const SCAN_AREA_SIZE = 280;
@@ -16,7 +15,6 @@ interface QrCodeScannerProps {
 export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
-    const [scannedData, setScannedData] = useState<string | null>(null);
     const [torchOn, setTorchOn] = useState(false);
 
     if (!permission) {
@@ -34,7 +32,9 @@ export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
 
     const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
         setScanned(true);
-        setScannedData(data);
+        if (onScanned) {
+            onScanned(data);
+        }
     };
 
     const toggleTorch = () => {
@@ -54,26 +54,14 @@ export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
             >
                 {/* Top Blur */}
                 <BlurView intensity={80} tint="dark" style={styles.blurTop}>
-                    <BlankSpace height={20} />
                     {/* Lottie Animation */}
-                    {!scanned && (
-                        <LottieView
-                            key={scannedData}
-                            source={require('../../assets/animation/Face ID transparent.json')}
-                            autoPlay
-                            loop
-                            // loop={false}
-                            style={styles.lottieAnim}
-                            onAnimationFinish={() => {
-                                if (onScanned && scannedData) {
-                                    onScanned(scannedData);
-                                }
-                            }}
-                        />
-                    )}
+                    <LottieView
+                        source={require('../../assets/animation/Face ID transparent.json')}
+                        autoPlay
+                        loop
+                        style={styles.lottieAnim}
+                    />
                     <Text style={styles.title}>Scan QR Code</Text>
-                    <BlankSpace height={20} />
-
                 </BlurView>
 
                 {/* Middle Section (Left Blur, Clear Center, Right Blur) */}
@@ -86,7 +74,6 @@ export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
                         <View style={[styles.corner, styles.topRight]} />
                         <View style={[styles.corner, styles.bottomLeft]} />
                         <View style={[styles.corner, styles.bottomRight]} />
-
 
                     </View>
 
@@ -112,10 +99,7 @@ export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
                     <View style={styles.rescanContainer}>
                         <TouchableOpacity
                             style={styles.rescanButton}
-                            onPress={() => {
-                                setScanned(false);
-                                setScannedData(null);
-                            }}
+                            onPress={() => setScanned(false)}
                         >
                             <Text style={styles.rescanText}>Tap to Scan Again</Text>
                         </TouchableOpacity>
@@ -217,6 +201,7 @@ const styles = StyleSheet.create({
     lottieAnim: {
         width: 150,
         height: 150,
+        opacity: 0.8,
     },
     torchButton: {
         width: 70,
