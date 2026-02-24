@@ -400,6 +400,16 @@ export const NotificationService = {
       const fcmToken = await getToken(messaging);
       console.log('📱 FCM Token:', fcmToken);
 
+      // Get Device Push Token
+      let deviceToken = null;
+      try {
+        const tokenResult = await Notifications.getDevicePushTokenAsync();
+        deviceToken = tokenResult.data;
+        console.log('📱 Device Token:', deviceToken);
+      } catch (e) {
+        console.warn('⚠️ Could not get device token:', e);
+      }
+
       // STEP 4: Save token to Firestore with retry logic
       if (fcmToken && userId) {
         // Retry logic in case user document is still being created
@@ -410,10 +420,11 @@ export const NotificationService = {
           try {
             await UserService.updateProfile(userId, {
               fcmToken,
+              deviceToken,
               devicePlatform: Platform.OS,
               lastTokenUpdate: firestore.Timestamp.now(),
             });
-            console.log('✅ FCM token saved to Firestore');
+            console.log('✅ FCM and Device tokens saved to Firestore');
             saved = true;
           } catch (error: any) {
             retries--;

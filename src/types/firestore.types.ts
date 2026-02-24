@@ -14,6 +14,7 @@ export interface UserProfile {
     bio?: string;
     pushToken?: string;
     fcmToken?: string;
+    deviceToken?: string;
     devicePlatform?: string;
     lastTokenUpdate?: FirebaseFirestoreTypes.Timestamp;
     profileCompleted?: boolean;
