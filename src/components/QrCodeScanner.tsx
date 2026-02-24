@@ -1,7 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import LottieView from 'lottie-react-native';
 import React, { useState } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BlankSpace } from './BlankSpace';
+
+const { width, height } = Dimensions.get('window');
+const SCAN_AREA_SIZE = 280;
 
 interface QrCodeScannerProps {
     onScanned?: (data: string) => void;
@@ -10,15 +16,14 @@ interface QrCodeScannerProps {
 export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
+    const [scannedData, setScannedData] = useState<string | null>(null);
     const [torchOn, setTorchOn] = useState(false);
 
     if (!permission) {
-        // Camera permissions are still loading.
         return <View />;
     }
 
     if (!permission.granted) {
-        // Camera permissions are not granted yet.
         return (
             <View style={styles.permissionContainer}>
                 <Text style={styles.message}>We need your permission to show the camera</Text>
@@ -29,9 +34,7 @@ export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
 
     const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
         setScanned(true);
-        if (onScanned) {
-            onScanned(data);
-        }
+        setScannedData(data);
     };
 
     const toggleTorch = () => {
@@ -49,49 +52,70 @@ export default function QrCodeScanner({ onScanned }: QrCodeScannerProps) {
                     barcodeTypes: ["qr"],
                 }}
             >
-                {/* Overlay */}
-                <View style={styles.overlay}>
-                    {/* Title */}
-                    <View style={styles.titleContainer}>
-                        <Text style={styles.title}>Scan QR Code</Text>
-                    </View>
+                {/* Top Blur */}
+                <BlurView intensity={80} tint="dark" style={styles.blurTop}>
+                    <BlankSpace height={20} />
+                    {/* Lottie Animation */}
+                    {!scanned && (
+                        <LottieView
+                            key={scannedData}
+                            source={require('../../assets/animation/Face ID transparent.json')}
+                            autoPlay
+                            loop
+                            // loop={false}
+                            style={styles.lottieAnim}
+                            onAnimationFinish={() => {
+                                if (onScanned && scannedData) {
+                                    onScanned(scannedData);
+                                }
+                            }}
+                        />
+                    )}
+                    <Text style={styles.title}>Scan QR Code</Text>
+                    <BlankSpace height={20} />
 
-                    {/* Scanning Area */}
-                    <View style={styles.scanningArea}>
-                        {/* Top Left Corner */}
+                </BlurView>
+
+                {/* Middle Section (Left Blur, Clear Center, Right Blur) */}
+                <View style={styles.middleRow}>
+                    <BlurView intensity={80} tint="dark" style={styles.blurSide} />
+
+                    <View style={styles.clearCenter}>
+                        {/* 4 White Corners */}
                         <View style={[styles.corner, styles.topLeft]} />
-
-                        {/* Top Right Corner */}
                         <View style={[styles.corner, styles.topRight]} />
-
-                        {/* Bottom Left Corner */}
                         <View style={[styles.corner, styles.bottomLeft]} />
-
-                        {/* Bottom Right Corner */}
                         <View style={[styles.corner, styles.bottomRight]} />
+
+
                     </View>
 
-                    {/* Bottom Controls */}
-                    <View style={styles.bottomControls}>
-                        <TouchableOpacity
-                            style={styles.torchButton}
-                            onPress={toggleTorch}
-                        >
-                            <Ionicons
-                                name={torchOn ? "flashlight" : "flashlight-outline"}
-                                size={32}
-                                color="#fff"
-                            />
-                        </TouchableOpacity>
-                    </View>
+                    <BlurView intensity={80} tint="dark" style={styles.blurSide} />
                 </View>
 
-                {/* Rescan Button */}
+                {/* Bottom Blur */}
+                <BlurView intensity={80} tint="dark" style={styles.blurBottom}>
+                    <TouchableOpacity
+                        style={styles.torchButton}
+                        onPress={toggleTorch}
+                    >
+                        <Ionicons
+                            name={torchOn ? "flashlight" : "flashlight-outline"}
+                            size={32}
+                            color="#fff"
+                        />
+                    </TouchableOpacity>
+                </BlurView>
+
+                {/* Rescan Overlay */}
                 {scanned && (
                     <View style={styles.rescanContainer}>
                         <TouchableOpacity
                             style={styles.rescanButton}
-                            onPress={() => setScanned(false)}
+                            onPress={() => {
+                                setScanned(false);
+                                setScannedData(null);
+                            }}
                         >
                             <Text style={styles.rescanText}>Tap to Scan Again</Text>
                         </TouchableOpacity>
@@ -123,15 +147,11 @@ const styles = StyleSheet.create({
     camera: {
         flex: 1,
     },
-    overlay: {
-        flex: 1,
-        backgroundColor: 'transparent',
-    },
-    titleContainer: {
+    blurTop: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 80,
+        paddingTop: 80, // Adjust for safe area
     },
     title: {
         fontSize: 24,
@@ -139,11 +159,25 @@ const styles = StyleSheet.create({
         color: '#fff',
         textAlign: 'center',
     },
-    scanningArea: {
-        width: 280,
-        height: 280,
-        alignSelf: 'center',
+    middleRow: {
+        flexDirection: 'row',
+        height: SCAN_AREA_SIZE,
+    },
+    blurSide: {
+        flex: 1,
+    },
+    clearCenter: {
+        width: SCAN_AREA_SIZE,
+        height: SCAN_AREA_SIZE,
+        justifyContent: 'center',
+        alignItems: 'center',
         position: 'relative',
+    },
+    blurBottom: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingBottom: 60,
     },
     corner: {
         position: 'absolute',
@@ -180,11 +214,9 @@ const styles = StyleSheet.create({
         borderTopWidth: 0,
         borderBottomRightRadius: 8,
     },
-    bottomControls: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        paddingBottom: 60,
+    lottieAnim: {
+        width: 150,
+        height: 150,
     },
     torchButton: {
         width: 70,

@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     Alert,
     Dimensions,
@@ -12,7 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import QRCodeStyled from 'react-native-qrcode-styled';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../constants/colors";
 import { useCurrentUserId, useUserProfile } from "../Hooks/useFirestore";
@@ -24,6 +24,7 @@ export default function QrProfileScreen() {
     const route = useRoute();
     const insets = useSafeAreaInsets();
     const currentUserId = useCurrentUserId();
+    const [selectedThemeIndex, setSelectedThemeIndex] = useState(0);
 
     // Get userId from route params, fallback to current user
     const params = route.params as { userId?: string } | undefined;
@@ -55,6 +56,47 @@ export default function QrProfileScreen() {
     }, []);
 
     const themes = ["🏠", "🐥", "⛄", "💎", "🤓"];
+
+    // Define unique QR Code styling for each theme
+    const themeConfigs = [
+        {   // 🏠 Classic / Default
+            color: Colors.primary,
+            pieceBorderRadius: 4,
+            isPiecesGlued: false,
+            innerEyesOptions: { borderRadius: 4, color: Colors.primary },
+            outerEyesOptions: { borderRadius: 12, color: Colors.primary }
+        },
+        {   // 🐥 Playful Yellow
+            color: "#FFB000",
+            pieceBorderRadius: 8,
+            isPiecesGlued: true,
+            innerEyesOptions: { borderRadius: 12, color: "#FF9100" },
+            outerEyesOptions: { borderRadius: 16, color: "#FFB000" }
+        },
+        {   // ⛄ Winter Blue
+            color: "#4A90E2",
+            pieceBorderRadius: 2,
+            isPiecesGlued: true,
+            innerEyesOptions: { borderRadius: 8, color: "#9013FE" },
+            outerEyesOptions: { borderRadius: 16, color: "#4A90E2" }
+        },
+        {   // 💎 Diamond Sharp
+            color: "#00C4B5",
+            pieceBorderRadius: 0,
+            isPiecesGlued: false,
+            innerEyesOptions: { borderRadius: 0, color: "#00C4B5" },
+            outerEyesOptions: { borderRadius: 0, color: "#00C4B5" }
+        },
+        {   // 🤓 Nerd Green / Hacker
+            color: "#00E676",
+            pieceBorderRadius: [4, 0, 4, 0], // Funky pattern
+            isPiecesGlued: false,
+            innerEyesOptions: { borderRadius: 2, color: "#1DE9B6" },
+            outerEyesOptions: { borderRadius: 6, color: "#00E676" }
+        }
+    ];
+
+    const currentConfig = themeConfigs[selectedThemeIndex];
 
     return (
         <View style={styles.container}>
@@ -91,12 +133,16 @@ export default function QrProfileScreen() {
                         {/* ✅ REAL QR GENERATION */}
                         <View style={styles.qrWrapper}>
                             <View style={styles.qrCodeContainer}>
-                                <QRCode
-                                    value={userData.qrData}
+                                <QRCodeStyled
+                                    data={userData.qrData}
+                                    style={{ backgroundColor: 'white' }}
+                                    padding={10}
                                     size={220}
-                                    color={Colors.primary}
-                                    backgroundColor={Colors.white}
-                                    quietZone={10}
+                                    pieceBorderRadius={currentConfig.pieceBorderRadius}
+                                    isPiecesGlued={currentConfig.isPiecesGlued}
+                                    color={currentConfig.color}
+                                    innerEyesOptions={currentConfig.innerEyesOptions}
+                                    outerEyesOptions={currentConfig.outerEyesOptions}
                                 />
                             </View>
                         </View>
@@ -126,8 +172,12 @@ export default function QrProfileScreen() {
                         {themes.map((icon, index) => (
                             <TouchableOpacity
                                 key={index}
-                                style={styles.qrStyleCard}
+                                style={[
+                                    styles.qrStyleCard,
+                                    selectedThemeIndex === index && styles.activeQrStyleCard
+                                ]}
                                 activeOpacity={0.7}
+                                onPress={() => setSelectedThemeIndex(index)}
                             >
                                 <Text style={styles.qrIcon}>{icon}</Text>
                             </TouchableOpacity>
@@ -158,7 +208,7 @@ export default function QrProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.background,
     },
     scrollView: {
         flex: 1,
@@ -284,6 +334,16 @@ const styles = StyleSheet.create({
         marginRight: 12,
         borderWidth: 2,
         borderColor: Colors.borderLight,
+    },
+    activeQrStyleCard: {
+        borderColor: Colors.primary,
+        borderWidth: 3,
+        backgroundColor: Colors.white,
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 6,
     },
     qrIcon: {
         fontSize: 32,
