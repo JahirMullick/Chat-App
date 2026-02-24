@@ -130,34 +130,39 @@ export default function QrProfileScreen() {
 
                 {/* Main QR Card */}
                 <View style={styles.centerContainer}>
-                    <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }} style={styles.qrCard}>
-                        {/* Avatar */}
-                        {userData.avatar ? (
-                            <Image
-                                source={{ uri: userData.avatar }}
-                                style={styles.avatar}
-                            />
-                        ) : (
-                            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                                <Text style={styles.avatarText}>
-                                    {userData.displayName.charAt(0).toUpperCase()}
-                                </Text>
+                    <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }} style={styles.viewShotWrapper}>
+                        <View style={styles.qrCard}>
+                            {/* Avatar */}
+                            {userData.avatar ? (
+                                <Image
+                                    source={{ uri: userData.avatar }}
+                                    style={styles.avatar}
+                                />
+                            ) : (
+                                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                                    <Text style={styles.avatarText}>
+                                        {userData.displayName.charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* User Name */}
+                            <Text style={styles.displayName}>{userData.displayName}</Text>
+
+                            {/* ✅ QR Code with Themes */}
+                            <View style={styles.qrWrapper}>
+                                <StyledQRCode
+                                    data={userData.qrData}
+                                    selectedThemeIndex={selectedThemeIndex}
+                                    onThemeChange={setSelectedThemeIndex}
+                                    showThemeSelector={false}
+                                />
                             </View>
-                        )}
 
-                        {/* ✅ QR Code with Themes */}
-                        <View style={styles.qrWrapper}>
-                            <StyledQRCode
-                                data={userData.qrData}
-                                selectedThemeIndex={selectedThemeIndex}
-                                onThemeChange={setSelectedThemeIndex}
-                                showThemeSelector={false}
-                            />
+                            {/* Username */}
+                            <Text style={styles.username}>@{userData.username}</Text>
+                            {/* <Text style={styles.userIdText}>{userData.userId}</Text> */}
                         </View>
-
-                        {/* Username */}
-                        <Text style={styles.username}>@{userData.username}</Text>
-                        {/* <Text style={styles.userIdText}>{userData.userId}</Text> */}
                     </ViewShot>
                 </View>
 
@@ -226,7 +231,11 @@ const styles = StyleSheet.create({
     },
     centerContainer: {
         alignItems: "center",
-        paddingVertical: 32,
+        paddingVertical: 12,
+    },
+    viewShotWrapper: {
+        padding: 20,
+        backgroundColor: 'transparent',
     },
     qrCard: {
         backgroundColor: Colors.white,
@@ -257,6 +266,13 @@ const styles = StyleSheet.create({
         color: Colors.white,
         fontSize: 32,
         fontWeight: "600",
+    },
+    displayName: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: Colors.textPrimary,
+        marginTop: 8,
+        marginBottom: 4,
     },
     qrWrapper: {
         marginVertical: 20,
