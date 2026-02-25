@@ -3,12 +3,13 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import {
-    Alert,
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -18,15 +19,16 @@ import { MainStackParamList } from "../Navigation/types";
 import { BackgroundStorage } from "../utils/storage";
 
 const { width } = Dimensions.get("window");
-const ITEM_WIDTH = (width - 48) / 3; // 3 columns with padding
+
+// Calculate 3 columns:
+// Container padding: 16 (left) + 16 (right) = 32
+// Gaps between 3 items: 12 (gap) * 2 = 24
+// Total spacing = 56. We subtract a bit more to be completely safe against pixel rounding errors on Android.
+const ITEM_WIDTH = Math.floor((width - 58) / 3);
 
 // Background images from assets/Backgrounds
 const BACKGROUNDS = [
-    {
-        id: "none",
-        name: "None",
-        source: null,
-    },
+
     {
         id: "batman",
         name: "Batman",
@@ -67,6 +69,27 @@ const BACKGROUNDS = [
         name: "Tweety Bird",
         source: require("../../assets/Backgrounds/tweety_bird.jpg"),
     },
+    {
+        id: "anime",
+        name: "Anime",
+        source: require("../../assets/Backgrounds/anime.jpg"),
+    },
+    {
+        id: "a1",
+        name: "A1",
+        source: require("../../assets/Backgrounds/a1.jpeg"),
+    },
+    {
+        id: "a2",
+        name: "A2",
+        source: require("../../assets/Backgrounds/a2.jpeg"),
+    },
+    {
+        id: "a3",
+        name: "A3",
+        source: require("../../assets/Backgrounds/a3.jpeg"),
+    },
+
 ];
 
 export default function ChatBackgroundScreen() {
@@ -104,20 +127,28 @@ export default function ChatBackgroundScreen() {
             if (selectedBackground) {
                 BackgroundStorage.setBackground(selectedBackground);
                 setSavedBackground(selectedBackground);
-                Alert.alert(
-                    "Success",
-                    "Background changed successfully!",
-                    [
-                        {
-                            text: "OK",
-                            onPress: () => navigation.goBack(),
-                        },
-                    ]
-                );
+
+                // Show toast message
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show(
+                        '✅ Background changed successfully!',
+                        ToastAndroid.SHORT
+                    );
+                }
+
+                // Navigate back after short delay
+                setTimeout(() => {
+                    navigation.goBack();
+                }, 500);
             }
         } catch (error) {
             console.error("Error saving background:", error);
-            Alert.alert("Error", "Failed to save background");
+            if (Platform.OS === 'android') {
+                ToastAndroid.show(
+                    '❌ Failed to save background',
+                    ToastAndroid.SHORT
+                );
+            }
         }
     };
 

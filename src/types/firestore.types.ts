@@ -14,10 +14,14 @@ export interface UserProfile {
     bio?: string;
     pushToken?: string;
     fcmToken?: string;
+    deviceToken?: string;
+    devicePlatform?: string;
     lastTokenUpdate?: FirebaseFirestoreTypes.Timestamp;
     profileCompleted?: boolean;
     gender?: string;
     dateOfBirth?: string;
+    language?: string;
+    showTranslate?: boolean;
 }
 
 // Story types
@@ -120,6 +124,9 @@ export interface UserChat {
     isHidden: boolean; // Hide chat until recipient sends first message
     lastReadAt: FirebaseFirestoreTypes.Timestamp | null;
     joinedAt: FirebaseFirestoreTypes.Timestamp;
+    lastMessageOverride?: string | null; // Text of the last message locally for this user
+    lastMessageTypeOverride?: MessageType | null; // Type of the last message locally
+    lastMessageTimeOverride?: FirebaseFirestoreTypes.Timestamp | null; // Time of the last message locally
 }
 
 /**
@@ -127,7 +134,7 @@ export interface UserChat {
  */
 export const getMessagePreview = (messageType: MessageType | undefined, text: string): string => {
     if (!messageType || messageType === "text") return text;
-    
+
     switch (messageType) {
         case "image":
             return "📷 Photo";

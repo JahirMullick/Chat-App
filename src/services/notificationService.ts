@@ -38,12 +38,12 @@
 
 //       const { status: existingStatus } = await Notifications.getPermissionsAsync();
 //       let finalStatus = existingStatus;
-      
+
 //       if (existingStatus !== 'granted') {
 //         const { status } = await Notifications.requestPermissionsAsync();
 //         finalStatus = status;
 //       }
-      
+
 //       const granted = finalStatus === 'granted';
 //       console.log(granted ? '✅ Android notification permission granted' : '⚠️ Android notification permission denied');
 //       return granted;
@@ -137,7 +137,7 @@
 //     const messaging = getMessaging();
 //     return onMessage(messaging, async (remoteMessage) => {
 //       console.log('📬 Foreground notification received:', remoteMessage);
-      
+
 //       // Display local notification when app is in foreground
 //       if (remoteMessage.notification) {
 //         await Notifications.scheduleNotificationAsync({
@@ -152,7 +152,7 @@
 //           trigger: null, // Show immediately
 //         });
 //       }
-      
+
 //       callback(remoteMessage);
 //     });
 //   },
@@ -333,7 +333,7 @@ export const NotificationService = {
         });
 
         console.log('✅ Android notification channels created');
-        
+
         // Log all channels for debugging
         const channels = await Notifications.getNotificationChannelsAsync();
         console.log('📋 Available channels:', channels?.map(c => c.id));
@@ -400,14 +400,42 @@ export const NotificationService = {
       const fcmToken = await getToken(messaging);
       console.log('📱 FCM Token:', fcmToken);
 
-      // STEP 4: Save token to Firestore
+      // Get Device Push Token
+      let deviceToken = null;
+      try {
+        const tokenResult = await Notifications.getDevicePushTokenAsync();
+        deviceToken = tokenResult.data;
+        console.log('📱 Device Token:', deviceToken);
+      } catch (e) {
+        console.warn('⚠️ Could not get device token:', e);
+      }
+
+      // STEP 4: Save token to Firestore with retry logic
       if (fcmToken && userId) {
-        await UserService.updateProfile(userId, {
-          fcmToken,
-          devicePlatform: Platform.OS,
-          lastTokenUpdate: firestore.Timestamp.now(),
-        });
-        console.log('✅ FCM token saved to Firestore');
+        // Retry logic in case user document is still being created
+        let retries = 3;
+        let saved = false;
+
+        while (retries > 0 && !saved) {
+          try {
+            await UserService.updateProfile(userId, {
+              fcmToken,
+              deviceToken,
+              devicePlatform: Platform.OS,
+              lastTokenUpdate: firestore.Timestamp.now(),
+            });
+            console.log('✅ FCM and Device tokens saved to Firestore');
+            saved = true;
+          } catch (error: any) {
+            retries--;
+            if (error.code === 'firestore/not-found' && retries > 0) {
+              console.log(`⏳ User document not ready, retrying... (${retries} attempts left)`);
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+            } else {
+              throw error; // Re-throw if not a not-found error or no retries left
+            }
+          }
+        }
       }
 
       return fcmToken;

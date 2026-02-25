@@ -109,8 +109,8 @@ export default function SettingsScreen() {
                 },
                 {
                     icon: "lock-closed-outline",
-                    label: "Privacy and Security",
-                    onPress: () => console.log("Privacy"),
+                    label: "Security",
+                    onPress: () => navigation.navigate("Security"),
                 },
                 {
                     icon: "notifications-outline",
@@ -141,7 +141,7 @@ export default function SettingsScreen() {
                     icon: "globe-outline",
                     label: "Language",
                     value: "English",
-                    onPress: () => console.log("Language"),
+                    onPress: () => navigation.navigate("Language" as never),
                 },
             ],
         },
@@ -157,7 +157,7 @@ export default function SettingsScreen() {
                     icon: "star",
                     label: "My Stars",
                     iconColor: "#FFB800",
-                    onPress: () => console.log("My Stars"),
+                    onPress: () => navigation.navigate("MyStar" as never),
                 },
                 {
                     icon: "briefcase-outline",

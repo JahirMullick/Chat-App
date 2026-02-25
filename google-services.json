@@ -1,33 +1,41 @@
 {
   "project_info": {
-    "project_number": "1024974520138",
-    "project_id": "testchat-1c3c7",
-    "storage_bucket": "testchat-1c3c7.firebasestorage.app"
+    "project_number": "943060295398",
+    "project_id": "testchat-c9734",
+    "storage_bucket": "testchat-c9734.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1024974520138:android:7b9e993b1d348e314e8bb3",
+        "mobilesdk_app_id": "1:943060295398:android:cbe10a765ef60811d8a527",
         "android_client_info": {
           "package_name": "com.anonymous.testchat"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1024974520138-251lvksk31g5f61c263ub17chipekdcp.apps.googleusercontent.com",
+          "client_id": "943060295398-0cvupod8cf2epl0e6kuq5l05l7ns4slo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anonymous.testchat",
+            "certificate_hash": "ab606b5fabf6fdb5daf60852868e285eebbcdf25"
+          }
+        },
+        {
+          "client_id": "943060295398-r3ems3bon4dnoendktmmsm2e0it8j1aa.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCtxLPvA1desnzp9xFu488WJFKAxHFnJ5Q"
+          "current_key": "AIzaSyAD14o8rXRa-LaDL62RJOlkjinZb-4n9gQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1024974520138-251lvksk31g5f61c263ub17chipekdcp.apps.googleusercontent.com",
+              "client_id": "943060295398-r3ems3bon4dnoendktmmsm2e0it8j1aa.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

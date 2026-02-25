@@ -6,7 +6,13 @@ export default {
         slug: "testchat",
         version: "1.0.0",
         orientation: "portrait",
-        icon: "./assets/images/Logo.png",
+        icon: "./assets/images/icon.png",
+        splash: {
+            image: "./assets/images/transparent.png",
+            resizeMode: "contain",
+            backgroundColor: "#ffffff",
+            file: "./src/screens/SplashScreen.tsx",
+        },
         scheme: "testchat",
         userInterfaceStyle: "automatic",
         newArchEnabled: true,
@@ -14,6 +20,9 @@ export default {
             supportsTablet: true,
             googleServicesFile: "./GoogleService-Info.plist", // Uncomment when you have iOS Firebase config
             bundleIdentifier: "com.anonymous.testchat",
+            infoPlist: {
+                NSFaceIDUsageDescription: "We use Face ID to unlock the app securely"
+            }
         },
         android: {
             googleServicesFile: "./google-services.json",
@@ -29,6 +38,8 @@ export default {
             package: "com.anonymous.testchat",
             permissions: [
                 "android.permission.POST_NOTIFICATIONS",
+                "USE_BIOMETRIC",
+                "USE_FINGERPRINT"
             ],
         },
         web: {
@@ -36,18 +47,6 @@ export default {
             favicon: "./assets/images/favicon.png",
         },
         plugins: [
-            [
-                "expo-splash-screen",
-                {
-                    image: "./assets/images/splash-icon.png",
-                    imageWidth: 200,
-                    resizeMode: "contain",
-                    backgroundColor: "#ffffff",
-                    dark: {
-                        backgroundColor: "#000000",
-                    },
-                },
-            ],
             [
                 "expo-notifications",
                 {

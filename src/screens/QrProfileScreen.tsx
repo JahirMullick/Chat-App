@@ -1,19 +1,24 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useMemo } from "react";
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
     Alert,
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
+    ToastAndroid,
     TouchableOpacity,
     View,
 } from "react-native";
-import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ViewShot from "react-native-view-shot";
+import StyledQRCode, { QRThemeSelector } from "../components/StyledQRCode";
 import Colors from "../constants/colors";
 import { useCurrentUserId, useUserProfile } from "../Hooks/useFirestore";
 
@@ -24,6 +29,8 @@ export default function QrProfileScreen() {
     const route = useRoute();
     const insets = useSafeAreaInsets();
     const currentUserId = useCurrentUserId();
+    const [selectedThemeIndex, setSelectedThemeIndex] = useState(0);
+    const viewShotRef = useRef<ViewShot>(null);
 
     // Get userId from route params, fallback to current user
     const params = route.params as { userId?: string } | undefined;
@@ -50,11 +57,61 @@ export default function QrProfileScreen() {
         navigation.goBack();
     }, [navigation]);
 
-    const handleShare = useCallback(() => {
-        Alert.alert("Share", "QR Code sharing feature coming soon!");
-    }, []);
+    const handleShare = async () => {
+        try {
+            if (viewShotRef.current && viewShotRef.current.capture) {
+                const uri = await viewShotRef.current.capture();
+                const isAvailable = await Sharing.isAvailableAsync();
+                if (isAvailable) {
+                    await Sharing.shareAsync(uri);
+                } else {
+                    if (Platform.OS === 'android') {
+                        ToastAndroid.show("Sharing isn't available", ToastAndroid.SHORT);
+                    } else {
+                        Alert.alert("Sharing isn't available on your platform");
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error sharing QR code:", error);
+            if (Platform.OS === 'android') {
+                ToastAndroid.show("Could not share QR code", ToastAndroid.SHORT);
+            } else {
+                Alert.alert("Error", "Could not share the QR code.");
+            }
+        }
+    };
 
-    const themes = ["🏠", "🐥", "⛄", "💎", "🤓"];
+    const handleDownload = async () => {
+        try {
+            const { status } = await MediaLibrary.requestPermissionsAsync();
+            if (status !== 'granted') {
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("Permission required to save", ToastAndroid.SHORT);
+                } else {
+                    Alert.alert("Permission Required", "We need permission to save the QR code to your gallery.");
+                }
+                return;
+            }
+
+            if (viewShotRef.current && viewShotRef.current.capture) {
+                const uri = await viewShotRef.current.capture();
+                await MediaLibrary.saveToLibraryAsync(uri);
+                if (Platform.OS === 'android') {
+                    ToastAndroid.show("Saved to gallery!", ToastAndroid.SHORT);
+                } else {
+                    Alert.alert("Success", "QR Code has been saved to your gallery!");
+                }
+            }
+        } catch (error) {
+            console.error("Error saving QR code:", error);
+            if (Platform.OS === 'android') {
+                ToastAndroid.show("Could not save QR code", ToastAndroid.SHORT);
+            } else {
+                Alert.alert("Error", "Could not save the QR code.");
+            }
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -73,38 +130,40 @@ export default function QrProfileScreen() {
 
                 {/* Main QR Card */}
                 <View style={styles.centerContainer}>
-                    <View style={styles.qrCard}>
-                        {/* Avatar */}
-                        {userData.avatar ? (
-                            <Image
-                                source={{ uri: userData.avatar }}
-                                style={styles.avatar}
-                            />
-                        ) : (
-                            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                                <Text style={styles.avatarText}>
-                                    {userData.displayName.charAt(0).toUpperCase()}
-                                </Text>
-                            </View>
-                        )}
+                    <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }} style={styles.viewShotWrapper}>
+                        <View style={styles.qrCard}>
+                            {/* Avatar */}
+                            {userData.avatar ? (
+                                <Image
+                                    source={{ uri: userData.avatar }}
+                                    style={styles.avatar}
+                                />
+                            ) : (
+                                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                                    <Text style={styles.avatarText}>
+                                        {userData.displayName.charAt(0).toUpperCase()}
+                                    </Text>
+                                </View>
+                            )}
 
-                        {/* ✅ REAL QR GENERATION */}
-                        <View style={styles.qrWrapper}>
-                            <View style={styles.qrCodeContainer}>
-                                <QRCode
-                                    value={userData.qrData}
-                                    size={220}
-                                    color={Colors.primary}
-                                    backgroundColor={Colors.white}
-                                    quietZone={10}
+                            {/* User Name */}
+                            <Text style={styles.displayName}>{userData.displayName}</Text>
+
+                            {/* ✅ QR Code with Themes */}
+                            <View style={styles.qrWrapper}>
+                                <StyledQRCode
+                                    data={userData.qrData}
+                                    selectedThemeIndex={selectedThemeIndex}
+                                    onThemeChange={setSelectedThemeIndex}
+                                    showThemeSelector={false}
                                 />
                             </View>
-                        </View>
 
-                        {/* Username */}
-                        <Text style={styles.username}>@{userData.username}</Text>
-                        {/* <Text style={styles.userIdText}>{userData.userId}</Text> */}
-                    </View>
+                            {/* Username */}
+                            <Text style={styles.username}>@{userData.username}</Text>
+                            {/* <Text style={styles.userIdText}>{userData.userId}</Text> */}
+                        </View>
+                    </ViewShot>
                 </View>
 
                 {/* QR Info Section */}
@@ -115,25 +174,11 @@ export default function QrProfileScreen() {
                     </Text>
                 </View>
 
-                {/* QR Themes Section */}
-                <View style={styles.themesSection}>
-                    <Text style={styles.themesTitle}>QR Code Styles</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.themesContent}
-                    >
-                        {themes.map((icon, index) => (
-                            <TouchableOpacity
-                                key={index}
-                                style={styles.qrStyleCard}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={styles.qrIcon}>{icon}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
+                {/* QR Theme Selector (outside ViewShot so it won't appear in screenshots) */}
+                <QRThemeSelector
+                    selectedThemeIndex={selectedThemeIndex}
+                    onThemeChange={setSelectedThemeIndex}
+                />
 
                 {/* Action Buttons */}
                 <View style={styles.actionSection}>
@@ -142,7 +187,7 @@ export default function QrProfileScreen() {
                         <Text style={styles.shareButtonText}>Share QR Code</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.downloadButton}>
+                    <TouchableOpacity style={styles.downloadButton} onPress={handleDownload}>
                         <MaterialCommunityIcons name="download" size={20} color={Colors.primary} />
                         <Text style={styles.downloadButtonText}>Download</Text>
                     </TouchableOpacity>
@@ -158,7 +203,7 @@ export default function QrProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.background,
     },
     scrollView: {
         flex: 1,
@@ -186,7 +231,11 @@ const styles = StyleSheet.create({
     },
     centerContainer: {
         alignItems: "center",
-        paddingVertical: 32,
+        paddingVertical: 12,
+    },
+    viewShotWrapper: {
+        padding: 20,
+        backgroundColor: 'transparent',
     },
     qrCard: {
         backgroundColor: Colors.white,
@@ -218,18 +267,15 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: "600",
     },
+    displayName: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: Colors.textPrimary,
+        marginTop: 8,
+        marginBottom: 4,
+    },
     qrWrapper: {
         marginVertical: 20,
-    },
-    qrCodeContainer: {
-        backgroundColor: Colors.white,
-        padding: 20,
-        borderRadius: 16,
-        shadowColor: Colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 4,
     },
     username: {
         fontSize: 18,
@@ -260,33 +306,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: Colors.textSecondary,
         lineHeight: 18,
-    },
-    themesSection: {
-        paddingHorizontal: 16,
-        marginBottom: 24,
-    },
-    themesTitle: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: Colors.textPrimary,
-        marginBottom: 12,
-    },
-    themesContent: {
-        paddingRight: 16,
-    },
-    qrStyleCard: {
-        width: 80,
-        height: 80,
-        borderRadius: 16,
-        backgroundColor: Colors.gray50,
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 12,
-        borderWidth: 2,
-        borderColor: Colors.borderLight,
-    },
-    qrIcon: {
-        fontSize: 32,
     },
     actionSection: {
         paddingHorizontal: 16,

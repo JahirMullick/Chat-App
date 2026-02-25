@@ -20,7 +20,6 @@ export const testFirestoreConnection = async (): Promise<boolean> => {
     try {
         const db = firestore();
         console.log("🔄 Testing Firestore connection...");
-        console.log("📱 Firebase App:", db.app.name);
         
         // Try to access Firestore - this will fail if not connected
         const testRef = db.collection("_connection_test");
@@ -29,19 +28,17 @@ export const testFirestoreConnection = async (): Promise<boolean> => {
         await testRef.limit(1).get();
         
         console.log("✅ Firestore connection successful!");
-        console.log("📊 Firestore Settings:", {
-            app: firestore.app.name,
-        });
         
         return true;
     } catch (error: any) {
         console.error("❌ Firestore connection failed!");
-        console.error("🔴 Full Error:", JSON.stringify(error, null, 2));
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
+        console.error("🔴 Error:", error?.message || "Unknown error");
+        if (error?.code) {
+            console.error("Error code:", error.code);
+        }
         
         // Provide helpful error messages
-        if (error.code === "firestore/permission-denied") {
+        if (error?.code === "firestore/permission-denied") {
             console.error("💡 FIX: Go to Firebase Console → Firestore → Rules and add:");
             console.error(`
 rules_version = '2';
@@ -53,9 +50,9 @@ service cloud.firestore {
   }
 }
             `);
-        } else if (error.code === "firestore/unavailable") {
+        } else if (error?.code === "firestore/unavailable") {
             console.error("💡 Hint: Check your internet connection or Firebase project configuration");
-        } else if (error.message?.includes("No Firebase App")) {
+        } else if (error?.message?.includes("No Firebase App")) {
             console.error("💡 Hint: Firebase is not initialized. Check google-services.json");
         }
         

@@ -58,7 +58,7 @@ export const UserService = {
                     const syncUpdates: { displayName?: string | null; photoURL?: string | null } = {};
                     if (nameChanged) syncUpdates.displayName = userData.displayName;
                     if (photoChanged) syncUpdates.photoURL = userData.photoURL;
-                    
+
                     UserService.syncParticipantDetailsAcrossChats(uid, syncUpdates).catch((err: Error) => {
                         console.error("Failed to sync participant details on login:", err);
                     });
@@ -117,7 +117,7 @@ export const UserService = {
                 const snapshot = await UserService.getCollection()
                     .where("uid", "in", chunk)
                     .get();
-                
+
                 snapshot.docs.forEach(doc => {
                     users.push({ uid: doc.id, ...doc.data() } as UserProfile);
                 });
@@ -147,11 +147,35 @@ export const UserService = {
     },
 
     /**
+     * Check if a phone number is already in use by another user
+     */
+    checkPhoneNumberExists: async (phoneNumber: string, excludeUserId?: string): Promise<boolean> => {
+        try {
+            let query = UserService.getCollection().where("phoneNumber", "==", phoneNumber);
+            const snapshot = await query.get();
+
+            if (snapshot.empty) {
+                return false;
+            }
+
+            // If excludeUserId is provided, check if the found user is NOT the current user
+            if (excludeUserId) {
+                return snapshot.docs.some(doc => doc.id !== excludeUserId);
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error checking phone number:", error);
+            throw error;
+        }
+    },
+
+    /**
      * Update user profile fields
      */
     updateProfile: async (
         userId: string,
-        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "fcmToken" | "lastTokenUpdate" | "profileCompleted" | "gender" | "dateOfBirth">>
+        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "fcmToken" | "deviceToken" | "devicePlatform" | "lastTokenUpdate" | "profileCompleted" | "gender" | "dateOfBirth" | "language" | "showTranslate">>
     ): Promise<void> => {
         try {
             // Remove undefined values from updates
@@ -162,11 +186,11 @@ export const UserService = {
                 return acc;
             }, {} as Record<string, any>);
 
-            // Update user document
-            await UserService.getDocRef(userId).update({
+            // Use set with merge instead of update to avoid not-found errors
+            await UserService.getDocRef(userId).set({
                 ...cleanUpdates,
                 updatedAt: firestore.FieldValue.serverTimestamp(),
-            });
+            }, { merge: true });
 
             // If displayName or photoURL changed, sync across all chats
             const shouldSyncChats = 'displayName' in cleanUpdates || 'photoURL' in cleanUpdates;
@@ -178,7 +202,7 @@ export const UserService = {
                 if ('photoURL' in cleanUpdates) {
                     syncUpdates.photoURL = cleanUpdates.photoURL;
                 }
-                
+
                 // Sync participant details in all chats (run in background)
                 UserService.syncParticipantDetailsAcrossChats(userId, syncUpdates).catch((err: Error) => {
                     console.error("Failed to sync participant details across chats:", err);
@@ -265,7 +289,7 @@ export const UserService = {
     searchUsersByEmail: async (email: string, currentUserId?: string, limit: number = 20): Promise<UserProfile[]> => {
         try {
             const normalizedEmail = email.toLowerCase().trim();
-            
+
             // Search for users whose email starts with the search term
             const snapshot = await UserService.getCollection()
                 .where("email", ">=", normalizedEmail)

@@ -1,4 +1,4 @@
-import auth, { getAuth } from "@react-native-firebase/auth";
+import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import {
@@ -23,7 +23,7 @@ export const useCurrentUserId = (): string | null => {
     const [userId, setUserId] = useState<string | null>(authInstance.currentUser?.uid || null);
 
     useEffect(() => {
-        const unsubscribe = auth().onAuthStateChanged(user => {
+        const unsubscribe = onAuthStateChanged(authInstance, user => {
             setUserId(user?.uid || null);
         });
         return unsubscribe;
@@ -38,7 +38,7 @@ export const useCurrentUserId = (): string | null => {
 export const useUserProfile = (userId?: string) => {
     const currentUserId = useCurrentUserId();
     const targetUserId = userId || currentUserId;
-    
+
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -66,7 +66,7 @@ export const useUserProfile = (userId?: string) => {
     }, [targetUserId]);
 
     const updateProfile = useCallback(
-        async (updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber">>) => {
+        async (updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "language" | "showTranslate">>) => {
             if (!targetUserId) return;
             try {
                 await UserService.updateProfile(targetUserId, updates);

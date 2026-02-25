@@ -13,6 +13,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    ToastAndroid,
     TouchableOpacity,
     View
 } from "react-native";
@@ -114,8 +115,15 @@ export default function CompleteProfileScreen() {
         console.log("============== handleCompleteProfile started ===================");
 
         // Validation
-        if (phoneNumber && !/^\+?[\d\s-]{10,}$/.test(phoneNumber)) {
-            Alert.alert("Invalid", "Please enter a valid phone number");
+        const cleanPhoneNumber = phoneNumber.replace(/[\s-]/g, '');
+
+        if (!cleanPhoneNumber) {
+            Alert.alert("Invalid", "Please enter your phone number");
+            return;
+        }
+
+        if (!/^\d{10}$/.test(cleanPhoneNumber)) {
+            Alert.alert("Invalid", "Phone number must be exactly 10 digits");
             return;
         }
 
@@ -132,6 +140,13 @@ export default function CompleteProfileScreen() {
         setIsLoading(true);
 
         try {
+            // Check if phone number is unique
+            const isPhoneNumberTaken = await UserService.checkPhoneNumberExists(cleanPhoneNumber, currentUser.uid);
+            if (isPhoneNumberTaken) {
+                Alert.alert("Error", "This phone number is already registered by another user.");
+                setIsLoading(false);
+                return;
+            }
             let photoURL = null;
 
             // Determine photoURL based on custom avatar toggle and image selection
@@ -162,7 +177,7 @@ export default function CompleteProfileScreen() {
 
             // Update user profile in Firestore
             console.log("Updating profile with data:", {
-                phoneNumber: phoneNumber.trim() || null,
+                phoneNumber: cleanPhoneNumber,
                 bio: bio.trim() || undefined,
                 gender: gender || undefined,
                 dateOfBirth: dateOfBirth.trim() || undefined,
@@ -171,7 +186,7 @@ export default function CompleteProfileScreen() {
             });
 
             await UserService.updateProfile(currentUser.uid, {
-                phoneNumber: phoneNumber.trim() || null,
+                phoneNumber: cleanPhoneNumber,
                 bio: bio.trim() || undefined,
                 gender: gender || undefined,
                 dateOfBirth: dateOfBirth.trim() || undefined,
@@ -189,10 +204,12 @@ export default function CompleteProfileScreen() {
             console.log("Auth reloaded");
 
             // Show success message - AppNavigator will automatically navigate to Main stack
-            Alert.alert(
-                "Success",
-                "Profile completed successfully!"
-            );
+            if (Platform.OS === 'android') {
+                ToastAndroid.show(
+                    'Profile completed successfully!',
+                    ToastAndroid.SHORT
+                );
+            }
 
             console.log("=== handleCompleteProfile completed ===");
         } catch (error) {
@@ -288,11 +305,12 @@ export default function CompleteProfileScreen() {
                             />
                             <TextInput
                                 style={styles.input}
-                                placeholder="234 567 8900"
+                                placeholder="1234567890"
                                 placeholderTextColor={Colors.textSecondary}
                                 value={phoneNumber}
-                                onChangeText={setPhoneNumber}
-                                keyboardType="phone-pad"
+                                onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))}
+                                keyboardType="number-pad"
+                                maxLength={10}
                             />
                         </View>
                     </View>

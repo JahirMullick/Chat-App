@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import auth, { getAuth } from "@react-native-firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithCredential } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -136,9 +136,11 @@ export default function SignupScreen() {
             if (!idToken) {
                 throw new Error('No ID token found');
             }
-            const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-            await auth().signInWithCredential(googleCredential);
+            const googleCredential = GoogleAuthProvider.credential(idToken);
+            const authInstance = getAuth();
+            await signInWithCredential(authInstance, googleCredential);
             console.log('Signed in with Google!');
+            console.log('User will be navigated by AppNavigator auth listener');
             setIsGoogleLoading(false);
         } catch (error: any) {
             setIsGoogleLoading(false);

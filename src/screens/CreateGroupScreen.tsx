@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { CommonActions, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import {
@@ -112,12 +112,24 @@ export default function CreateGroupScreen() {
 
             console.log("Group created successfully with ID:", chatId);
 
-            // Navigate to the new group chat
-            navigation.replace("Chat" as never, {
-                chatId: chatId,
-                name: groupName,
-                avatarColor: avatarColor,
-            } as never);
+            // Navigate to the new group chat and reset navigation stack
+            // This ensures pressing back from Chat goes to Home, not CreateGroup
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 1,
+                    routes: [
+                        { name: 'Home' },
+                        {
+                            name: 'Chat',
+                            params: {
+                                chatId: chatId,
+                                name: groupName,
+                                avatarColor: avatarColor,
+                            },
+                        },
+                    ],
+                })
+            );
         } catch (error) {
             console.error("Error creating group:", error);
             Alert.alert("Error", "Failed to create group. Please try again.");

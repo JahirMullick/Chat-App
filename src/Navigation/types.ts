@@ -11,8 +11,8 @@ export type AuthStackParamList = {
 // Main Stack Types
 export type MainStackParamList = {
     Home: undefined;
-    Chat: { 
-        chatId?: string; 
+    Chat: {
+        chatId?: string;
         recipientId?: string; // For new chats that haven't been created yet
         name: string;
         avatar?: string;
@@ -28,6 +28,13 @@ export type MainStackParamList = {
         phoneNumber?: string;
         username?: string;
     };
+    GroupProfile: {
+        chatId?: string;
+        groupName?: string;
+        memberCount?: number;
+    };
+    Contacts: undefined;
+    Calls: undefined;
     QrProfile: {
         userId?: string;
     };
@@ -41,6 +48,11 @@ export type MainStackParamList = {
     Settings: undefined;
     ChatFolders: undefined;
     ChatBackground: undefined;
+    Security: undefined;
+    Passcode: { mode: "create" | "verify" | "change" | "disable"; onSuccess?: () => void; customTitle?: string; customSubtitle?: string; };
+    PasscodeSettings: undefined;
+    MyStar: undefined;
+    Language: undefined;
 };
 
 // Root Stack Types (combines Auth and Main)
@@ -62,6 +74,6 @@ export type RootStackScreenProps<T extends keyof RootStackParamList> =
 // Declare global types for useNavigation hook
 declare global {
     namespace ReactNavigation {
-        interface RootParamList extends RootStackParamList {}
+        interface RootParamList extends RootStackParamList { }
     }
 }
