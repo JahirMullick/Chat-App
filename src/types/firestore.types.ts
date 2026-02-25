@@ -20,6 +20,8 @@ export interface UserProfile {
     profileCompleted?: boolean;
     gender?: string;
     dateOfBirth?: string;
+    language?: string;
+    showTranslate?: boolean;
 }
 
 // Story types

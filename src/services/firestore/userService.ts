@@ -175,7 +175,7 @@ export const UserService = {
      */
     updateProfile: async (
         userId: string,
-        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "fcmToken" | "deviceToken" | "devicePlatform" | "lastTokenUpdate" | "profileCompleted" | "gender" | "dateOfBirth">>
+        updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "pushToken" | "fcmToken" | "deviceToken" | "devicePlatform" | "lastTokenUpdate" | "profileCompleted" | "gender" | "dateOfBirth" | "language" | "showTranslate">>
     ): Promise<void> => {
         try {
             // Remove undefined values from updates

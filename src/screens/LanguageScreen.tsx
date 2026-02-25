@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     ScrollView,
     StatusBar,
@@ -12,6 +12,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useUserProfile } from "../Hooks/useFirestore";
 import { MainStackParamList } from "../Navigation/types";
 
 const LANGUAGES = [
@@ -29,8 +30,31 @@ export default function LanguageScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
     const insets = useSafeAreaInsets();
 
+    const { profile, updateProfile } = useUserProfile();
+
     const [showTranslate, setShowTranslate] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState("en");
+
+    useEffect(() => {
+        if (profile) {
+            if (profile.showTranslate !== undefined) {
+                setShowTranslate(profile.showTranslate);
+            }
+            if (profile.language) {
+                setSelectedLanguage(profile.language);
+            }
+        }
+    }, [profile]);
+
+    const handleToggleTranslate = async (value: boolean) => {
+        setShowTranslate(value); // Optimistic lock
+        await updateProfile({ showTranslate: value });
+    };
+
+    const handleSelectLanguage = async (value: string) => {
+        setSelectedLanguage(value); // Optimistic lock
+        await updateProfile({ language: value });
+    };
 
     const PRIMARY_BLUE = "#1DA1F2"; // similar to standard blue
     const BG_COLOR = "#F2F2F7";
@@ -59,7 +83,7 @@ export default function LanguageScreen() {
                         <Text style={styles.rowText}>Show Translate Button</Text>
                         <Switch
                             value={showTranslate}
-                            onValueChange={setShowTranslate}
+                            onValueChange={handleToggleTranslate}
                             trackColor={{ false: "#E5E5EA", true: PRIMARY_BLUE }}
                             thumbColor="#fff"
                         />
@@ -92,7 +116,7 @@ export default function LanguageScreen() {
                                 <TouchableOpacity
                                     style={styles.langRow}
                                     activeOpacity={0.7}
-                                    onPress={() => setSelectedLanguage(lang.id)}
+                                    onPress={() => handleSelectLanguage(lang.id)}
                                 >
                                     {/* Custom Radio Button */}
                                     <View style={[

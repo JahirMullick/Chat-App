@@ -38,7 +38,7 @@ export const useCurrentUserId = (): string | null => {
 export const useUserProfile = (userId?: string) => {
     const currentUserId = useCurrentUserId();
     const targetUserId = userId || currentUserId;
-    
+
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -66,7 +66,7 @@ export const useUserProfile = (userId?: string) => {
     }, [targetUserId]);
 
     const updateProfile = useCallback(
-        async (updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber">>) => {
+        async (updates: Partial<Pick<UserProfile, "displayName" | "photoURL" | "bio" | "phoneNumber" | "language" | "showTranslate">>) => {
             if (!targetUserId) return;
             try {
                 await UserService.updateProfile(targetUserId, updates);
