@@ -17,8 +17,6 @@ import { MainStackParamList } from "../Navigation/types";
 const LANGUAGES = [
     { id: "en", name: "English", alt: "English" },
     { id: "ar", name: "العربية", alt: "Arabic" },
-    { id: "be", name: "Беларуская", alt: "Belarusian" },
-    { id: "ca", name: "Català", alt: "Catalan" },
     { id: "hr", name: "Hrvatski", alt: "Croatian" },
     { id: "cs", name: "Čeština", alt: "Czech" },
     { id: "nl", name: "Nederlands", alt: "Dutch" },
