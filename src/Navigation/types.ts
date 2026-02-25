@@ -52,6 +52,7 @@ export type MainStackParamList = {
     Passcode: { mode: "create" | "verify" | "change" | "disable"; onSuccess?: () => void; customTitle?: string; customSubtitle?: string; };
     PasscodeSettings: undefined;
     MyStar: undefined;
+    Language: undefined;
 };
 
 // Root Stack Types (combines Auth and Main)

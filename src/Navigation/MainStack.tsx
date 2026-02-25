@@ -6,6 +6,7 @@ import ChatScreen from "../screens/ChatScreen";
 import ContactsScreen from "../screens/ContactsScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
 import GroupProfileScreen from "../screens/GroupProfileScreen";
+import LanguageScreen from "../screens/LanguageScreen";
 import MyStarScreen from "../screens/MyStarScreen";
 import NewChatScreen from "../screens/NewChatScreen";
 import NewGroupScreen from "../screens/NewGroupScreen";
@@ -52,6 +53,7 @@ export default function MainStack() {
             <Stack.Screen name="ChatFolders" component={ChatFoldersScreen} />
             <Stack.Screen name="ChatBackground" component={ChatBackgroundScreen} />
             <Stack.Screen name="QrProfile" component={QrProfileScreen} />
+            <Stack.Screen name="Language" component={LanguageScreen} />
         </Stack.Navigator>
     );
 }

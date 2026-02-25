@@ -141,7 +141,7 @@ export default function SettingsScreen() {
                     icon: "globe-outline",
                     label: "Language",
                     value: "English",
-                    onPress: () => console.log("Language"),
+                    onPress: () => navigation.navigate("Language" as never),
                 },
             ],
         },
