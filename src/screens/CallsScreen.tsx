@@ -22,6 +22,7 @@ export default function CallsScreen() {
     );
 
     return (
+        // remove safe area view
         // <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.container} >
             <Header
