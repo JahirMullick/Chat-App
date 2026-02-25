@@ -5,6 +5,7 @@ import ChatFoldersScreen from "../screens/ChatFoldersScreen";
 import ChatScreen from "../screens/ChatScreen";
 import ContactsScreen from "../screens/ContactsScreen";
 import CreateGroupScreen from "../screens/CreateGroupScreen";
+import GroupProfileScreen from "../screens/GroupProfileScreen";
 import MyStarScreen from "../screens/MyStarScreen";
 import NewChatScreen from "../screens/NewChatScreen";
 import NewGroupScreen from "../screens/NewGroupScreen";
@@ -32,6 +33,7 @@ export default function MainStack() {
             <Stack.Screen name="Home" component={DrawerNavigator} />
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+            <Stack.Screen name="GroupProfile" component={GroupProfileScreen} />
             <Stack.Screen name="Contacts" component={ContactsScreen} />
             <Stack.Screen name="Calls" component={CallsScreen} />
             <Stack.Screen name="MyStar" component={MyStarScreen} />

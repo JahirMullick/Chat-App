@@ -464,8 +464,6 @@ function ChatScreen() {
                         mediaUrl: message.imageUri, // Assumption: imageUri holds the main media URL
                         mediaThumbnail: message.videoThumbnail,
                         mediaType,
-                        // Fix types: ensure optional values are strings or undefined
-                        videoDuration: message.videoDuration || undefined,
                         // Note: replyTo structure must match what sendMessage expects
                     }
                 );
@@ -488,17 +486,25 @@ function ChatScreen() {
 
     // Navigate to user profile screen
     const handleOpenProfile = useCallback(() => {
-        if (!recipientId) return;
-        navigation.navigate("UserProfile", {
-            recipientId,
-            chatId: activeChatId || undefined,
-            name: chatName,
-            avatar: chatAvatar,
-            avatarColor,
-            phoneNumber: recipientProfile?.phoneNumber || undefined,
-            username: recipientProfile?.displayName?.replace(/\s/g, "").toLowerCase(),
-        });
-    }, [recipientId, activeChatId, chatName, chatAvatar, avatarColor, recipientProfile, navigation]);
+        if (isGroupChat) {
+            navigation.navigate("GroupProfile", {
+                chatId: activeChatId || undefined,
+                groupName: chatName,
+                memberCount: chatInfo?.participantIds?.length || 1,
+            });
+        } else {
+            if (!recipientId) return;
+            navigation.navigate("UserProfile", {
+                recipientId,
+                chatId: activeChatId || undefined,
+                name: chatName,
+                avatar: chatAvatar,
+                avatarColor,
+                phoneNumber: recipientProfile?.phoneNumber || undefined,
+                username: recipientProfile?.displayName?.replace(/\s/g, "").toLowerCase(),
+            });
+        }
+    }, [isGroupChat, activeChatId, chatName, chatInfo, recipientId, chatAvatar, avatarColor, recipientProfile, navigation]);
 
     // Chat menu items (using handlers defined above)
     const chatMenuItems: MenuItemType[] = useMemo(() => [

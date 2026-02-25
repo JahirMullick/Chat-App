@@ -28,6 +28,11 @@ export type MainStackParamList = {
         phoneNumber?: string;
         username?: string;
     };
+    GroupProfile: {
+        chatId?: string;
+        groupName?: string;
+        memberCount?: number;
+    };
     Contacts: undefined;
     Calls: undefined;
     QrProfile: {

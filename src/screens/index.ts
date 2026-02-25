@@ -2,6 +2,7 @@ export { default as ChatFoldersScreen } from "./ChatFoldersScreen";
 export { default as ChatScreen } from "./ChatScreen";
 export { default as CompleteProfileScreen } from "./CompleteProfileScreen";
 export { default as ForgotPasswordScreen } from "./ForgotPasswordScreen";
+export { default as GroupProfileScreen } from "./GroupProfileScreen";
 export { default as HomeScreen } from "./HomeScreen";
 export { default as LoginScreen } from "./LoginScreen";
 export { default as MyStarScreen } from "./MyStarScreen";

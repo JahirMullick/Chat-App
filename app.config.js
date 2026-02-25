@@ -7,6 +7,12 @@ export default {
         version: "1.0.0",
         orientation: "portrait",
         icon: "./assets/images/icon.png",
+        splash: {
+            image: "./assets/images/transparent.png",
+            resizeMode: "contain",
+            backgroundColor: "#ffffff",
+            file: "./src/screens/SplashScreen.tsx",
+        },
         scheme: "testchat",
         userInterfaceStyle: "automatic",
         newArchEnabled: true,
